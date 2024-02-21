@@ -1,0 +1,6 @@
+openapi: 3.0.3
+info:
+  title: AVM Server
+  description: todo
+servers:
+  - url: http://localhost:7200

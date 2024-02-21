@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Main class",
+            "request": "launch",
+            "mainClass": "digital.slovensko.avm.Main",
+            "projectName": "avm",
+            "preLaunchTask": "java (build): Build Workspace",
+            "vmArgs": "--add-exports jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED --add-modules jdk.crypto.cryptoki --add-exports java.base/sun.security.x509=ALL-UNNAMED",
+            "args": "-p 7200",
+            "osx": {
+                "console": "integratedTerminal"
+            }
+        }
+    ]
+}
