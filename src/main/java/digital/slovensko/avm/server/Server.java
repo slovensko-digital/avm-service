@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import com.sun.net.httpserver.HttpServer;
 
 import digital.slovensko.avm.core.AVM;
+import digital.slovensko.avm.server.endpoints.*;
 import digital.slovensko.avm.server.filters.AutogramCorsFilter;
 
 public class Server {
@@ -20,22 +21,27 @@ public class Server {
     }
 
     public void start() {
-        // Info
+        // GET Info
         server.createContext("/info", new InfoEndpoint()).getFilters()
                 .add(new AutogramCorsFilter("GET"));
 
-        // Documentation
+        // GET Documentation
         server.createContext("/docs", new DocumentationEndpoint());
 
-        // Sign
+        // POST Sign
         server.createContext("/sign", new SignEndpoint(avm)).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
-        // DatToSign
+        // POST DataToSign
         server.createContext("/datatosign", new DataToSignEndpoint(avm)).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
+        // POST Visualization
         server.createContext("/visualization", new VisualizationEndpoint(avm)).getFilters()
+                .add(new AutogramCorsFilter("POST"));
+
+        // POST ValidateParameters
+        server.createContext("/parameters/validate", new ValidateParametersEndpoint()).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
         // Start server

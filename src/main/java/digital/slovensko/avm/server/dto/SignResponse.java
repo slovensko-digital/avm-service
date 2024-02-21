@@ -1,13 +1,6 @@
 package digital.slovensko.avm.server.dto;
 
-public class SignResponse {
-    private String content;
-    private String signedBy;
-    private String issuedby;
+import java.lang.reflect.Array;
 
-    public SignResponse(String content, String signedBy, String issuedby) {
-        this.content = content;
-        this.signedBy = signedBy;
-        this.issuedby = issuedby;
-    }
+public record SignResponse(DocumentResponse documentResponse, SignerRecord signer) {
 }

@@ -1,6 +1,372 @@
 openapi: 3.0.3
 info:
   title: AVM Server
-  description: todo
+  description: Autogram microservice to be used with AVM server
+  version: 0.2.0
 servers:
   - url: http://localhost:7200
+paths:
+  /parameters/validate:
+    post:
+      description: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OriginalRequestBody"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: OK
+        400:
+          description: The combination of parameres and document is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: UNPROCESSABLE_INPUT
+                    description: Code that can be used to identify the error.
+                  message:
+                    type: string
+                    example: IllegalArgumentException parsing request body
+                    description: Human readable error message.
+                  details:
+                    type: string
+                    example: PayloadMimeType must be PDF when using PAdES.
+                    description: Optional details.
+
+  /visualization:
+    post:
+      description: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignRequestBody"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+        400:
+          description: Visualization failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: UNPROCESSABLE_INPUT
+                    description: Code that can be used to identify the error.
+                  message:
+                    type: string
+                    example: IllegalArgumentException parsing request body
+                    description: Human readable error message.
+                  details:
+                    type: string
+                    example: PayloadMimeType must be PDF when using PAdES.
+                    description: Optional details.
+  /datatosign:
+    post:
+      description: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataToSignRequestBody"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataToSignStructure"
+
+  /sign:
+    post:
+      description: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignRequestBody"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+             schema:
+               $ref: "#/components/schemas/SignRequestResponse"
+
+components:
+  schemas:
+    OriginalRequestBody:
+      type: object
+      properties:
+        batchId:
+          type: string
+          example: "0c62536c-f43f-4302-b8f0-e2ad521c8175"
+          description: |
+            Optional identifier of the batch.
+            If not provided, document will be signed as single standalone document.
+            If provided, document will be signed inside batch.
+        document:
+          $ref: "#/components/schemas/Document"
+        parameters:
+          $ref: "#/components/schemas/SignatureParameters"
+        payloadMimeType:
+          type: string
+          example: application/xml
+          description: |
+            MIME type for document content and signature parameters like transformation and schema.
+            Binary files should be encoded using base64, e.g., `application/pdf;base64`.
+            Text formats like XML can be optionally encoded using base64 but can be supplied as plain text as seen in the examples, in which case the type is `application/xml`.
+      required:
+        - document
+        - parameters
+        - payloadMimeType
+
+    Document:
+      type: object
+      properties:
+        filename:
+          type: string
+          example: "document.xml"
+          description: Filename of the original file to be signed. Is used to name the file inside ASiC container. If not provided with ASiC container, the file is named `detached-file` inside the container.
+        content:
+          type: string
+          example: '<?xml version="1.0"?><Document><Title>Lorem Ipsum</Title></Document>'
+          description: "Content of the document to sign, format is dictated by `payloadMimeType`."
+      required:
+        - content
+
+    SignatureParameters:
+      type: object
+      properties:
+        checkPDFACompliance:
+          type: boolean
+          default: false
+          description: "Check for PDF/A compliance and show warning if not compliant."
+
+        autoLoadEform:
+          type: boolean
+          default: false
+          description:
+            Try to find XSD and XSLT for a given eForm and load them automatically. Useful for visualizing and signing eForms.
+            If true, schema, transformation, conatinerXmlns, container, packaging, and identifier parameters are ignored.
+            If resources are not found, the response is 422.
+            If provided document is an ASiC_E container conatining XML Datacontainer or it is an XML Datacontainer itself, XSLT found is used for visualiztion of signing document. Also, XSD and XSLT hashes are compared with hashes of XSD and XSLT found in XML Data Container EForm. If they differ, the response is 422.
+            If the provided document is an XML document, Autogram will try to parse xmlns from root element and find resources based on its value.
+            If successful, XML Datacontainer with xmls="http://data.gov.sk/def/container/xmldatacontainer+xml/1.1" is created, the document is validated against the XSD and visualized using the XSLT. If XSD validation fails, the response is 422.
+            The XSLT transformation is found based on transformationLanguage (defaults to user preferred), transformationMediaDestinationTypeDescription (default XHTML, then HTML, then TXT), and transformationTargetEnvironment.
+            If multiple transformations meet the criteria, the first one found is used.
+
+        level:
+          type: string
+          enum:
+            - XAdES_BASELINE_B
+            - PAdES_BASELINE_B
+            - CAdES_BASELINE_B
+          example: XAdES_BASELINE_B
+          description: "Signature format PAdES is usable only with documents of type `application/pdf`. Format XAdES is usable with XML or with any file type if using an ASiC container."
+
+        container:
+          type: string
+          enum:
+            - ASiC_E
+          example: ASiC_E
+          description: Optional container type that should be used to place the file with signature to. Defaults to null. Is ignored with autoLoadEform true.
+
+        containerXmlns:
+          type: string
+          enum:
+            - http://data.gov.sk/def/container/xmldatacontainer+xml/1.1
+          example: http://data.gov.sk/def/container/xmldatacontainer+xml/1.1
+          description: XML namespace for the XML Datacontainer. Specifies if xmldatacontainer should be created from XML. Doesn't create xmldatacontainer if payloadMimeType is application/vnd.gov.sk.xmldatacontainer+xml already. Accepts http://data.gov.sk/def/container/xmldatacontainer+xml/1.1 only. Defaults to null. Is ignored with autoLoadEform true.
+
+        embedUsedSchemas:
+          type: boolean
+          example: false
+          description: When creating XML Datacontainer, parameter indicates whether to embed XSD and XML or reference them. Practically this should be only used for ORSR EForms in which case (when identifier contains "justice.gov.sk/Forms") this parameter is overridden to true.
+
+        identifier:
+          type: string
+          example: https://data.gov.sk/id/egov/eform/App.GeneralAgenda/1.9
+          description: Optional identifier of the document template. Required if containerXmlns is http://data.gov.sk/def/container/xmldatacontainer+xml/1.1. Defaults to null. Is ignored with autoLoadEform true.
+
+        packaging:
+          type: string
+          enum:
+            - ENVELOPED
+            - ENVELOPING
+          default: ENVELOPED
+          description: Optional form of packaging used with XML. ENVELOPED adds the signature as a child of the root element while ENVELOPING wraps the XML in a new element. Only applies to XAdES signatures. Must be ENVELOPING when used without ASiC container and with non XML documents. Is ignored with autoLoadEform true.
+
+        digestAlgorithm:
+          type: string
+          enum:
+            - SHA256
+            - SHA384
+            - SHA512
+          default: SHA256
+          description: Optional algorithm used to calculate digests.
+
+        en319132:
+          type: boolean
+          default: false
+          description: Optional flag to control whether the signature should be made according to ETSI EN 319132 for XAdES and ETSI EN 319122 for CAdES and PAdES.
+
+        infoCanonicalization:
+          type: string
+          enum:
+            - INCLUSIVE
+            - EXCLUSIVE
+            - INCLUSIVE_WITH_COMMENTS
+            - EXCLUSIVE_WITH_COMMENTS
+            - INCLUSIVE_11
+            - INCLUSIVE_11_WITH_COMMENTS
+          default: INCLUSIVE
+          description: Optional info canonicalization method.
+
+        propertiesCanonicalization:
+          type: string
+          enum:
+            - INCLUSIVE
+            - EXCLUSIVE
+            - INCLUSIVE_WITH_COMMENTS
+            - EXCLUSIVE_WITH_COMMENTS
+            - INCLUSIVE_11
+            - INCLUSIVE_11_WITH_COMMENTS
+          default: INCLUSIVE
+          description: Optional properties canonicalization method.
+
+        keyInfoCanonicalization:
+          type: string
+          enum:
+            - INCLUSIVE
+            - EXCLUSIVE
+            - INCLUSIVE_WITH_COMMENTS
+            - EXCLUSIVE_WITH_COMMENTS
+            - INCLUSIVE_11
+            - INCLUSIVE_11_WITH_COMMENTS
+          default: INCLUSIVE
+          description: Optional key info canonicalization method.
+
+        schema:
+          type: string
+          example: '<?xml version="1.0"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"><xs:element name="Document"><xs:complexType><xs:sequence><xs:element name="Title" type="xs:string" /></xs:sequence></xs:complexType></xs:element></xs:schema>'
+          description: Optional XML schema used to validate the signing document and to compute digest used in "UsedXSDReference" in "DigestValue" attribute inside created XML Datacontainer. Format (plaintext or base64) is dictated by `payloadMimeType`. Is ignored with autoLoadEform true.
+
+        schemaIdentifier:
+          type: string
+          example: http://schemas.gov.sk/form/App.GeneralAgenda/1.9/form.xsd
+          description: Optional identifier of the XML schema. The value is used in "UsedXSDReference" field inside created XML Datacontainer. If provided with autoLoadEform true, Autogram will try to find such schema. Default value is "http://schemas.gov.sk/form/<form-idnetifier>/<version>/form.xsd".
+
+        transformation:
+          type: string
+          example: '<?xml version="1.0"?><xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"><xsl:template match = "/"><h1><xsl:value-of select="/Document/Title"/></h1></xsl:template></xsl:stylesheet>'
+          description: Optional XML transformation used to present the signing document to user and to compute digest used in "UsedPresentationSchemaReference" in "DigestValue" attribute inside created XML Datacontainer. Format (plaintext or base64) is dictated by `payloadMimeType`. Is ignored with autoLoadEform true.
+
+        transformationIdentifier:
+          type: string
+          example: http://schemas.gov.sk/form/App.GeneralAgenda/1.9/form.xslt
+          description: Optional identifier of the XML transformation. If provided with autoLoadEform true, Autogram will try to find such transformation. Default value is "http://schemas.gov.sk/form/<form-idnetifier>/<version>/form.xslt".
+
+        transformationLanguage:
+          type: string
+          example: sk
+          description: Optional language of the XML transformation. If autoLoadEform is true, Autogram will try to find signing XSLT with this language. Otherwise transformation must be provided. Default value is user preferred or "sk".
+
+        transformationMediaDestinationTypeDescription:
+          type: string
+          enum:
+            - XHTML
+            - HTML
+            - TXT
+          example: HTML
+          description: Optional media destination type description of the XML transformation. If autoLoadEform is true, Autogram will try to find signing XSLT with this type. Otherwise transformation must be provided. Overrides value of the output method in provided or auto-loaded transformation which is used by default.
+
+        transformationTargetEnvironment:
+          type: string
+          example: example-value
+          description: Optional target environment of the XML transformation. If autoLoadEform is true, Autogram will try to find signing XSLT with this target. Otherwise transformation must be provided. Null and not used by default.
+
+      required:
+        - level
+
+    DataToSignRequestBody:
+      type: object
+      properties:
+        originalRequestBody:
+          $ref: "#/components/schemas/SignRequestBody"
+        signingCertificate:
+          type: string
+          example: MIIDZjCCAk6gAwIBAgIEZVH4UzANBgkqhkiG9w0BAQsFADB1MQswCQYDVQQGEwJTSzETMBEGA1UECAwKQnJhdGlzbGF2YTETMBEGA1UEBwwKQnJhdGlzbGF2YTERMA8GA1UECgwIQXV0b2dyYW0xETAPBgNVBAsMCEF1dG9ncmFtMRYwFAYDVQQDDA1BdXRvZ3JhbSBUZXN0MB4XDTIzMTExMzEwMjAwM1oXDTI0MTExMjEwMjAwM1owdTELMAkGA1UEBhMCU0sxEzARBgNVBAgMCkJyYXRpc2xhdmExEzARBgNVBAcMCkJyYXRpc2xhdmExETAPBgNVBAoMCEF1dG9ncmFtMREwDwYDVQQLDAhBdXRvZ3JhbTEWMBQGA1UEAwwNQXV0b2dyYW0gVGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAN8d3eH2xRJeesoNmDIguuHBv5hhqRPsN4LGjGmhQ9NrBAN1DKW31wh0+Tfdx58GNztgLVpElpQB7/yBprqNAKADYXs+onkUbg4X798lAbiaaMvQzY9dVXhFhb1I2ZEGurNhZqP01wbjRso4O0UJ2wSIw5r/sZZji17VhdhquVzDP+RzJeU36CRohE7T1caG6Q1/Tl5arSvEcJMz/8YUYjudB0Bbj+1Z06JTWK+FW/7zJmPNsRGSnF/TLIMDvIabMDoUswP7wBPbnoWy+B/tTdKnl818OKilRlZf5mjmINvZ8I3eXl0WRA/UlURuAp3PprcZnBdejCBHNomgyML8G9sCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAKD+0fM+cRVkDOoTU9qyESQ6tma8cchjV8dVvTbvHmLTZYCBxKUTugZOz9tENd+9p+1uGc6opcCrmiHyq0oG8D8Y9FLzHFKgslod4+IHUOON/pes+r6b4/0Z4+rjuZ5JrDyeIWsGtwVQaM6BeC1afr/H7uT9kr8Eu1ElNw/SAWBmQZiz3e40XF2ijPd9b43p05O0dqBF0q383bD2K15QJofzCM+0I0OqhJwsWvHlupoPlcF4gRqFV7MUQ5QHXOryUCICp8h2O8988JFvXxaJKGMCU9Zfick3KJ3UsdJ+0jbCL4pOep75abBD6pcdD9qlUF4seiiQiceMbmmeTQfqTgg==
+
+    DataToSignStructure:
+      type: object
+      properties:
+        dataToSign:
+          type: string
+          example: MYIBBDAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMC8GCSqGSIb3DQEJBDEiBCBi60eUI/NmObmcTwDsze2zBooVmgpZh8puJa4OhNpEejCBtgYLKoZIhvcNAQkQAi8xgaYwgaMwgaAwgZ0EIJz+4gnulo5kn6oovtKTUeONdQyNjCUKINcKqCmvL7JwMHkwa6RpMGcxCzAJBgNVBAYTAlNLMRMwEQYDVQQHEwpCcmF0aXNsYXZhMRcwFQYDVQRhEw5OVFJTSy0zNTk3NTk0NjETMBEGA1UEChMKRGlzaWcgYS5zLjEVMBMGA1UEAxMMU1ZLIGVJRCBBQ0EyAgoG/pWsnJ0ABRcV
+        signingTime:
+          type: integer
+          example: 1707900119123
+        signingCertificate:
+          type: string
+          example: MIIDZjCCAk6gAwIBAgIEZVH4UzANBgkqhkiG9w0BAQsFADB1MQswCQYDVQQGEwJTSzETMBEGA1UECAwKQnJhdGlzbGF2YTETMBEGA1UEBwwKQnJhdGlzbGF2YTERMA8GA1UECgwIQXV0b2dyYW0xETAPBgNVBAsMCEF1dG9ncmFtMRYwFAYDVQQDDA1BdXRvZ3JhbSBUZXN0MB4XDTIzMTExMzEwMjAwM1oXDTI0MTExMjEwMjAwM1owdTELMAkGA1UEBhMCU0sxEzARBgNVBAgMCkJyYXRpc2xhdmExEzARBgNVBAcMCkJyYXRpc2xhdmExETAPBgNVBAoMCEF1dG9ncmFtMREwDwYDVQQLDAhBdXRvZ3JhbTEWMBQGA1UEAwwNQXV0b2dyYW0gVGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAN8d3eH2xRJeesoNmDIguuHBv5hhqRPsN4LGjGmhQ9NrBAN1DKW31wh0+Tfdx58GNztgLVpElpQB7/yBprqNAKADYXs+onkUbg4X798lAbiaaMvQzY9dVXhFhb1I2ZEGurNhZqP01wbjRso4O0UJ2wSIw5r/sZZji17VhdhquVzDP+RzJeU36CRohE7T1caG6Q1/Tl5arSvEcJMz/8YUYjudB0Bbj+1Z06JTWK+FW/7zJmPNsRGSnF/TLIMDvIabMDoUswP7wBPbnoWy+B/tTdKnl818OKilRlZf5mjmINvZ8I3eXl0WRA/UlURuAp3PprcZnBdejCBHNomgyML8G9sCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAKD+0fM+cRVkDOoTU9qyESQ6tma8cchjV8dVvTbvHmLTZYCBxKUTugZOz9tENd+9p+1uGc6opcCrmiHyq0oG8D8Y9FLzHFKgslod4+IHUOON/pes+r6b4/0Z4+rjuZ5JrDyeIWsGtwVQaM6BeC1afr/H7uT9kr8Eu1ElNw/SAWBmQZiz3e40XF2ijPd9b43p05O0dqBF0q383bD2K15QJofzCM+0I0OqhJwsWvHlupoPlcF4gRqFV7MUQ5QHXOryUCICp8h2O8988JFvXxaJKGMCU9Zfick3KJ3UsdJ+0jbCL4pOep75abBD6pcdD9qlUF4seiiQiceMbmmeTQfqTgg==
+
+    SignRequestBody:
+      type: object
+      properties:
+        originalRequestBody:
+          $ref: "#/components/schemas/OriginalRequestBody"
+        dataToSignStructure:
+          $ref: "#/components/schemas/DataToSignStructure"
+        signedData:
+          type: string
+          example: eP49QHaKINDTo8/56O6ZlDVKGn3FYq+fRqnCMpQExYVIWrHeZkGoq2FxRRThlEKkOBUS5+8+RHZzOf4yXAFfKjNmNdMnyisEUToQqYSQavec3KZPaDgcvNdZ4MC+tRMcwTod75Zu87UleyOLe3Xoqxjteq7MvqVRCc/C1sX2yVab3yIOSgoZILpHgTl4EqTOonVJts4XBnEzuZKwXS10KyumjoSE41EqTrM/mwy95ebdrRZqNI5EWJIzor8jC5AMsmsBWvxeBKkfepFiWHMtTy1iYkJMZ6vbttlEdTSt9OqSszyw7Z7fP7Tl55hkKL4fiiXA9DOzyibn4E1XD1tRPRaqulxsdIrTbnMgeXlteXG3XXK76+OgqnRxb2hxPx6H8Qiig0GhK1Qn2H26JaNrpFjsqT9n7md9PzLuhmB4MI7HxOUCdAxmRt4cxNkJdHB2NsDBVfQ7FBNxxi35j93D/GD2KpaG77Iq/5ZfBegvQn28N2oGh/xsEqc3hoc6o23E
+
+    SignRequestResponse:
+      type: object
+      properties:
+        documentResponse:
+          $ref: "#/components/schemas/DocumentResponse"
+        signer:
+          $ref: "#/components/schemas/SignerRecord"
+
+    DocumentResponse:
+      type: object
+      properties:
+        content:
+          type: string
+          example: sample_document.txt
+        mimeType:
+          type: string
+          example: text/plain
+        filename:
+          type: string
+          example: ZXhhbXBsZSBzdHJpbmcgaW4gYmFzZTY0Cg==
+
+    SignerRecord:
+      type: object
+      properties:
+        signedBy:
+          type: string
+          example: SERIALNUMBER=PNOSK-1234567890, C=SK, L=Bratislava, SURNAME=Smith, GIVENNAME=John, CN=John Smith
+        issuedBy:
+          type: string
+          example: CN=SVK eID ACA2, O=Disig a.s., OID.2.5.4.97=NTRSK-12345678, L=Bratislava, C=SK

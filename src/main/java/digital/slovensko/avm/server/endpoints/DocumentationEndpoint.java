@@ -1,4 +1,4 @@
-package digital.slovensko.avm.server;
+package digital.slovensko.avm.server.endpoints;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;

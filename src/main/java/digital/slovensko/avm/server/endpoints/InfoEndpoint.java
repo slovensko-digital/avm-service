@@ -1,4 +1,4 @@
-package digital.slovensko.avm.server;
+package digital.slovensko.avm.server.endpoints;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
