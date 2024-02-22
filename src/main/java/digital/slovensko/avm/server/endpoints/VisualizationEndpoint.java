@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpHandler;
 import digital.slovensko.avm.core.AVM;
 import digital.slovensko.avm.core.errors.AutogramException;
 import digital.slovensko.avm.server.EndpointUtils;
+import digital.slovensko.avm.server.dto.DocumentResponse;
 import digital.slovensko.avm.server.dto.ErrorResponse;
 import digital.slovensko.avm.server.dto.OriginalSignRequestBody;
 import digital.slovensko.avm.core.errors.MalformedBodyException;
@@ -27,7 +28,7 @@ public class VisualizationEndpoint implements HttpHandler {
             body.validateSigningParameters();
 
             var result = avm.getVisualization(body);
-            EndpointUtils.respondWith(result, exchange);
+            EndpointUtils.respondWith(DocumentResponse.buildFormDSS(result), exchange);
 
         } catch (JsonSyntaxException | IOException e) {
             var response = ErrorResponse.buildFromException(new MalformedBodyException(e.getMessage(), e));

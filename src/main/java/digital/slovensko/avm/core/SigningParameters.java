@@ -41,7 +41,6 @@ public class SigningParameters {
     private final String keyInfoCanonicalization;
     private final String identifier;
     private final boolean checkPDFACompliance;
-    private final int visualizationWidth;
     private final boolean embedUsedSchemas;
     private final String xsdIdentifier;
     private final XsltParams xsltParams;
@@ -51,7 +50,7 @@ public class SigningParameters {
             String containerXmlns, SignaturePackaging packaging, DigestAlgorithm digestAlgorithm,
             Boolean en319132, String infoCanonicalization, String propertiesCanonicalization,
             String keyInfoCanonicalization, String schema, String transformation, String identifier,
-            boolean checkPDFACompliance, int preferredPreviewWidth, boolean embedUsedSchemas,
+            boolean checkPDFACompliance, boolean embedUsedSchemas,
             String xsdIdentifier, XsltParams xsltParams, TSPSource tspSource) {
         this.level = level;
         this.asicContainer = container;
@@ -66,7 +65,6 @@ public class SigningParameters {
         this.transformation = transformation;
         this.identifier = identifier;
         this.checkPDFACompliance = checkPDFACompliance;
-        this.visualizationWidth = preferredPreviewWidth;
         this.embedUsedSchemas = embedUsedSchemas;
         this.xsdIdentifier = xsdIdentifier;
         this.xsltParams = xsltParams;
@@ -200,13 +198,13 @@ public class SigningParameters {
             String containerXmlns, SignaturePackaging packaging, DigestAlgorithm digestAlgorithm,
             Boolean en319132, String infoCanonicalization, String propertiesCanonicalization,
             String keyInfoCanonicalization, String schema, String transformation, String identifier,
-            boolean checkPDFACompliance, int preferredPreviewWidth, boolean autoLoadEform, boolean embedUsedSchemas,
+            boolean checkPDFACompliance, boolean autoLoadEform, boolean embedUsedSchemas,
             String xsdIdentifier, String xsltIdentifier, String xsltLanguage, String xsltType, String xsltTarget,
             DSSDocument document, TSPSource tspSource, boolean plainXmlEnabled) throws AutogramException {
 
         return buildParameters(level, container, containerXmlns, packaging, digestAlgorithm, en319132,
                 infoCanonicalization, propertiesCanonicalization, keyInfoCanonicalization, schema, transformation,
-                identifier, checkPDFACompliance, preferredPreviewWidth, autoLoadEform, embedUsedSchemas, xsdIdentifier,
+                identifier, checkPDFACompliance, autoLoadEform, embedUsedSchemas, xsdIdentifier,
                 new XsltParams(xsltIdentifier, xsltLanguage, xsltType, xsltTarget, null),
                 document, tspSource, plainXmlEnabled);
     }
@@ -215,7 +213,7 @@ public class SigningParameters {
             String containerXmlns, SignaturePackaging packaging, DigestAlgorithm digestAlgorithm,
             Boolean en319132, String infoCanonicalization, String propertiesCanonicalization,
             String keyInfoCanonicalization, String schema, String transformation, String identifier,
-            boolean checkPDFACompliance, int preferredPreviewWidth, boolean autoLoadEform, boolean embedUsedSchemas,
+            boolean checkPDFACompliance, boolean autoLoadEform, boolean embedUsedSchemas,
             String xsdIdentifier, XsltParams xsltParams, DSSDocument document, TSPSource tspSource,
             boolean plainXmlEnabled) throws AutogramException {
 
@@ -288,7 +286,7 @@ public class SigningParameters {
 
         return new SigningParameters(level, container, containerXmlns, packaging, digestAlgorithm, en319132,
                 infoCanonicalization, propertiesCanonicalization, keyInfoCanonicalization, schema, transformation,
-                identifier, checkPDFACompliance, preferredPreviewWidth, embedUsedSchemas, xsdIdentifier,
+                identifier, checkPDFACompliance, embedUsedSchemas, xsdIdentifier,
                 xsltParams, tspSource);
     }
 
@@ -298,10 +296,6 @@ public class SigningParameters {
 
     public boolean getCheckPDFACompliance() {
         return checkPDFACompliance;
-    }
-
-    public int getVisualizationWidth() {
-        return (visualizationWidth > 0) ? visualizationWidth : 768;
     }
 
     public String getXsltDestinationType() {

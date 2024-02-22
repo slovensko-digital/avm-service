@@ -5,7 +5,7 @@
     <option name="MAIN_CLASS_NAME" value="digital.slovensko.avm.Main" />
     <module name="autogram" />
     <option name="PROGRAM_PARAMETERS" value="-p 7200" />
-    <option name="VM_PARAMETERS" value="--add-exports jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED --add-opens java.base/java.security=ALL-UNNAMED --add-opens jdk.crypto.cryptoki/sun.security.pkcs11=ALL-UNNAMED" />
+    <option name="VM_PARAMETERS" value="--add-exports jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED --add-opens java.base/java.security=ALL-UNNAMED --add-opens jdk.crypto.cryptoki/sun.security.pkcs11=ALL-UNNAMED --add-exports java.base/sun.security.x509=ALL-UNNAMED" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

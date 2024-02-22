@@ -1,8 +1,10 @@
 package digital.slovensko.avm.util;
 
+import digital.slovensko.avm.core.SignatureValidator;
 import eu.europa.esig.dss.asic.cades.validation.ASiCContainerWithCAdESValidatorFactory;
 import eu.europa.esig.dss.asic.xades.validation.ASiCContainerWithXAdESValidatorFactory;
 import eu.europa.esig.dss.cades.validation.CMSDocumentValidatorFactory;
+import eu.europa.esig.dss.enumerations.SignatureLevel;
 import eu.europa.esig.dss.model.DSSDocument;
 import eu.europa.esig.dss.model.x509.CertificateToken;
 import eu.europa.esig.dss.pades.validation.PDFDocumentValidatorFactory;

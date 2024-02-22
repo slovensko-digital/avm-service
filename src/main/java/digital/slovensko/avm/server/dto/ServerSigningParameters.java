@@ -40,16 +40,8 @@ public class ServerSigningParameters {
         XHTML
     }
 
-    public enum VisualizationWidthEnum {
-        sm,
-        md,
-        lg,
-        xl,
-        xxl
-    }
-
     private final ASiCContainerType container;
-    private final SignatureLevel level;
+    private SignatureLevel level;
     private final String containerXmlns;
     private final String schema;
     private final String transformation;
@@ -61,7 +53,6 @@ public class ServerSigningParameters {
     private final LocalCanonicalizationMethod keyInfoCanonicalization;
     private final String identifier;
     private final boolean checkPDFACompliance;
-    private final VisualizationWidthEnum visualizationWidth;
     private final boolean autoLoadEform;
     private final boolean embedUsedSchemas;
     private final String schemaIdentifier;
@@ -76,7 +67,7 @@ public class ServerSigningParameters {
             Boolean en319132, LocalCanonicalizationMethod infoCanonicalization,
             LocalCanonicalizationMethod propertiesCanonicalization, LocalCanonicalizationMethod keyInfoCanonicalization,
             String schema, String transformation,
-            String Identifier, boolean checkPDFACompliance, VisualizationWidthEnum preferredPreviewWidth,
+            String Identifier, boolean checkPDFACompliance,
             boolean autoLoadEform, boolean embedUsedSchemas, String schemaIdentifier, String transformationIdentifier,
             String transformationLanguage, TransformationOutputMimeType transformationMediaDestinationTypeDescription,
             String transformationTargetEnvironment) {
@@ -93,7 +84,6 @@ public class ServerSigningParameters {
         this.transformation = transformation;
         this.identifier = Identifier;
         this.checkPDFACompliance = checkPDFACompliance;
-        this.visualizationWidth = preferredPreviewWidth;
         this.autoLoadEform = autoLoadEform;
         this.embedUsedSchemas = embedUsedSchemas;
         this.schemaIdentifier = schemaIdentifier;
@@ -102,6 +92,30 @@ public class ServerSigningParameters {
         this.transformationMediaDestinationTypeDescription = transformationMediaDestinationTypeDescription;
         this.transformationTargetEnvironment = transformationTargetEnvironment;
     }
+
+    public ServerSigningParameters() {
+        this.level = null;
+        this.container = null;
+        this.containerXmlns = null;
+        this.packaging = null;
+        this.digestAlgorithm = null;
+        this.en319132 = null;
+        this.infoCanonicalization = null;
+        this.propertiesCanonicalization = null;
+        this.keyInfoCanonicalization = null;
+        this.schema = null;
+        this.transformation = null;
+        this.identifier = null;
+        this.checkPDFACompliance = false;
+        this.autoLoadEform = true;
+        this.embedUsedSchemas = false;
+        this.schemaIdentifier = null;
+        this.transformationIdentifier = null;
+        this.transformationLanguage = null;
+        this.transformationMediaDestinationTypeDescription = null;
+        this.transformationTargetEnvironment = null;
+
+    };
 
     public SigningParameters getSigningParameters(boolean isBase64, DSSDocument document, TSPSource tspSource, boolean plainXmlEnabled) {
         return SigningParameters.buildFromRequest(
@@ -116,7 +130,7 @@ public class ServerSigningParameters {
                 getCanonicalizationMethodString(keyInfoCanonicalization),
                 getSchema(isBase64),
                 getTransformation(isBase64),
-                identifier, checkPDFACompliance, getVisualizationWidth(), autoLoadEform, embedUsedSchemas,
+                identifier, checkPDFACompliance, autoLoadEform, embedUsedSchemas,
                 schemaIdentifier, transformationIdentifier, transformationLanguage,
                 getTransformationMediaDestinationTypeDescription(), transformationTargetEnvironment,
                 document,
@@ -177,20 +191,6 @@ public class ServerSigningParameters {
         };
     }
 
-    private int getVisualizationWidth() {
-        if (visualizationWidth == null)
-            return 0;
-
-        return switch (visualizationWidth) {
-            case sm -> 640;
-            case md -> 768;
-            case lg -> 1024;
-            case xl -> 1280;
-            case xxl -> 1536;
-            default -> 0;
-        };
-    }
-
     private SignatureLevel getSignatureLevel() {
         return level;
     }
@@ -199,15 +199,27 @@ public class ServerSigningParameters {
         return container;
     }
 
-    public void validate(MimeType mimeType) throws RequestValidationException {
-        if (level == null)
-            throw new RequestValidationException("Parameters.Level is required", "");
+    public void validate(MimeType mimeType, SignatureLevel documentSignatureLevel) throws RequestValidationException {
+        if (level == null) {
+            if (documentSignatureLevel == null)
+                throw new RequestValidationException("Parameters.Level is required", "");
+
+            level = documentSignatureLevel;
+        }
+
+        if (documentSignatureLevel != null && documentSignatureLevel.getSignatureForm() != level.getSignatureForm())
+            try {
+                level = SignatureLevel.valueOf(level.name().replace(level.getSignatureForm().name(), documentSignatureLevel.getSignatureForm().name()));
+            } catch (Exception e) {
+                throw new RequestValidationException("Malformed or mismatched signature level", "");
+            }
 
         var supportedLevels = Arrays.asList(
                 SignatureLevel.XAdES_BASELINE_B,
-                SignatureLevel.PAdES_BASELINE_B,
-                SignatureLevel.CAdES_BASELINE_B,
                 SignatureLevel.XAdES_BASELINE_T,
+                SignatureLevel.CAdES_BASELINE_B,
+                SignatureLevel.CAdES_BASELINE_T,
+                SignatureLevel.PAdES_BASELINE_B,
                 SignatureLevel.PAdES_BASELINE_T);
 
         if (!supportedLevels.contains(level))

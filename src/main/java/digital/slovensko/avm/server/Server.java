@@ -26,7 +26,8 @@ public class Server {
                 .add(new AutogramCorsFilter("GET"));
 
         // GET Documentation
-        server.createContext("/docs", new DocumentationEndpoint());
+        server.createContext("/docs", new DocumentationEndpoint()).getFilters()
+                .add(new AutogramCorsFilter("GET"));
 
         // POST Sign
         server.createContext("/sign", new SignEndpoint(avm)).getFilters()

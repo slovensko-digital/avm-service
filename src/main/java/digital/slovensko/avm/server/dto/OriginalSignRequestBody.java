@@ -2,6 +2,7 @@ package digital.slovensko.avm.server.dto;
 
 import java.util.Base64;
 
+import digital.slovensko.avm.core.SignatureValidator;
 import digital.slovensko.avm.core.errors.TransformationParsingErrorException;
 
 import digital.slovensko.avm.core.SigningParameters;
@@ -15,20 +16,13 @@ import static digital.slovensko.avm.core.AutogramMimeType.*;
 
 public class OriginalSignRequestBody {
     private final Document document;
-    private final ServerSigningParameters parameters;
+    private ServerSigningParameters parameters;
     private final String payloadMimeType;
-    private final String batchId;
 
     public OriginalSignRequestBody(Document document, ServerSigningParameters parameters, String payloadMimeType) {
-        this(document, parameters, payloadMimeType, null);
-    }
-
-    public OriginalSignRequestBody(Document document, ServerSigningParameters parameters, String payloadMimeType,
-                                   String batchId) {
         this.document = document;
         this.parameters = parameters;
         this.payloadMimeType = payloadMimeType;
-        this.batchId = batchId;
     }
 
     public void validateDocument() throws RequestValidationException, MalformedBodyException {
@@ -51,18 +45,21 @@ public class OriginalSignRequestBody {
 
     public void validateSigningParameters() throws RequestValidationException, MalformedBodyException,
             TransformationParsingErrorException {
-        if (parameters == null)
-            throw new RequestValidationException("Parameters are required", "");
 
-        parameters.validate(getDocument().getMimeType());
+        var documentSignatureLevel = SignatureValidator.getSignedDocumentSignatureLevel(getDocument());
+
+        if (parameters == null) {
+            if (documentSignatureLevel == null)
+                throw new RequestValidationException("Parameters are required for yet to be signed document", "");
+
+            parameters = new ServerSigningParameters();
+        }
+
+        parameters.validate(getDocument().getMimeType(), documentSignatureLevel);
     }
 
     public SigningParameters getParameters(TSPSource tspSource, boolean plainXmlEnabled) {
         return parameters.getSigningParameters(isBase64(), getDocument(), tspSource, plainXmlEnabled);
-    }
-
-    public String getBatchId() {
-        return batchId;
     }
 
     private MimeType getMimetype() {

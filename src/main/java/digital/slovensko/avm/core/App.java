@@ -59,9 +59,9 @@ public class App {
     public static void run(int port, TSPSource tspSource) throws Exception {
         var avm = new AVM(tspSource, false);
 
-        new Thread(() -> {
-            avm.initializeSignatureValidator(scheduledExecutorService, Executors.newFixedThreadPool(8));
-        }).start();
+//        new Thread(() -> {
+//            avm.initializeSignatureValidator(scheduledExecutorService, Executors.newFixedThreadPool(8));
+//        }).start();
 
         var server = new Server(avm, "0.0.0.0", port, cachedExecutorService);
         server.start();

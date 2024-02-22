@@ -13,7 +13,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OriginalRequestBody"
+              $ref: "#/components/schemas/OriginalSignRequestBody"
       responses:
         200:
           description: OK
@@ -52,7 +52,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SignRequestBody"
+              $ref: "#/components/schemas/OriginalSignRequestBody"
       responses:
         200:
           description: OK
@@ -113,20 +113,14 @@ paths:
 
 components:
   schemas:
-    OriginalRequestBody:
+    OriginalSignRequestBody:
       type: object
       properties:
-        batchId:
-          type: string
-          example: "0c62536c-f43f-4302-b8f0-e2ad521c8175"
-          description: |
-            Optional identifier of the batch.
-            If not provided, document will be signed as single standalone document.
-            If provided, document will be signed inside batch.
         document:
           $ref: "#/components/schemas/Document"
         parameters:
           $ref: "#/components/schemas/SignatureParameters"
+          description: Required for yet to be signed documents
         payloadMimeType:
           type: string
           example: application/xml
@@ -136,7 +130,6 @@ components:
             Text formats like XML can be optionally encoded using base64 but can be supplied as plain text as seen in the examples, in which case the type is `application/xml`.
       required:
         - document
-        - parameters
         - payloadMimeType
 
     Document:
@@ -181,7 +174,7 @@ components:
             - PAdES_BASELINE_B
             - CAdES_BASELINE_B
           example: XAdES_BASELINE_B
-          description: "Signature format PAdES is usable only with documents of type `application/pdf`. Format XAdES is usable with XML or with any file type if using an ASiC container."
+          description: "Signature format PAdES is usable only with documents of type `application/pdf`. Format XAdES is usable with XML or with any file type if using an ASiC container. Required for yet to be signed documents."
 
         container:
           type: string
@@ -304,14 +297,11 @@ components:
           example: example-value
           description: Optional target environment of the XML transformation. If autoLoadEform is true, Autogram will try to find signing XSLT with this target. Otherwise transformation must be provided. Null and not used by default.
 
-      required:
-        - level
-
     DataToSignRequestBody:
       type: object
       properties:
-        originalRequestBody:
-          $ref: "#/components/schemas/SignRequestBody"
+        originalSignRequestBody:
+          $ref: "#/components/schemas/OriginalSignRequestBody"
         signingCertificate:
           type: string
           example: MIIDZjCCAk6gAwIBAgIEZVH4UzANBgkqhkiG9w0BAQsFADB1MQswCQYDVQQGEwJTSzETMBEGA1UECAwKQnJhdGlzbGF2YTETMBEGA1UEBwwKQnJhdGlzbGF2YTERMA8GA1UECgwIQXV0b2dyYW0xETAPBgNVBAsMCEF1dG9ncmFtMRYwFAYDVQQDDA1BdXRvZ3JhbSBUZXN0MB4XDTIzMTExMzEwMjAwM1oXDTI0MTExMjEwMjAwM1owdTELMAkGA1UEBhMCU0sxEzARBgNVBAgMCkJyYXRpc2xhdmExEzARBgNVBAcMCkJyYXRpc2xhdmExETAPBgNVBAoMCEF1dG9ncmFtMREwDwYDVQQLDAhBdXRvZ3JhbTEWMBQGA1UEAwwNQXV0b2dyYW0gVGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAN8d3eH2xRJeesoNmDIguuHBv5hhqRPsN4LGjGmhQ9NrBAN1DKW31wh0+Tfdx58GNztgLVpElpQB7/yBprqNAKADYXs+onkUbg4X798lAbiaaMvQzY9dVXhFhb1I2ZEGurNhZqP01wbjRso4O0UJ2wSIw5r/sZZji17VhdhquVzDP+RzJeU36CRohE7T1caG6Q1/Tl5arSvEcJMz/8YUYjudB0Bbj+1Z06JTWK+FW/7zJmPNsRGSnF/TLIMDvIabMDoUswP7wBPbnoWy+B/tTdKnl818OKilRlZf5mjmINvZ8I3eXl0WRA/UlURuAp3PprcZnBdejCBHNomgyML8G9sCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAKD+0fM+cRVkDOoTU9qyESQ6tma8cchjV8dVvTbvHmLTZYCBxKUTugZOz9tENd+9p+1uGc6opcCrmiHyq0oG8D8Y9FLzHFKgslod4+IHUOON/pes+r6b4/0Z4+rjuZ5JrDyeIWsGtwVQaM6BeC1afr/H7uT9kr8Eu1ElNw/SAWBmQZiz3e40XF2ijPd9b43p05O0dqBF0q383bD2K15QJofzCM+0I0OqhJwsWvHlupoPlcF4gRqFV7MUQ5QHXOryUCICp8h2O8988JFvXxaJKGMCU9Zfick3KJ3UsdJ+0jbCL4pOep75abBD6pcdD9qlUF4seiiQiceMbmmeTQfqTgg==
@@ -332,8 +322,8 @@ components:
     SignRequestBody:
       type: object
       properties:
-        originalRequestBody:
-          $ref: "#/components/schemas/OriginalRequestBody"
+        originalSignRequestBody:
+          $ref: "#/components/schemas/OriginalSignRequestBody"
         dataToSignStructure:
           $ref: "#/components/schemas/DataToSignStructure"
         signedData:

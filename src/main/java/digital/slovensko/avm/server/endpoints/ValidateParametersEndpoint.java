@@ -8,6 +8,7 @@ import digital.slovensko.avm.server.EndpointUtils;
 import digital.slovensko.avm.server.dto.ErrorResponse;
 import digital.slovensko.avm.server.dto.OriginalSignRequestBody;
 import digital.slovensko.avm.core.errors.MalformedBodyException;
+import digital.slovensko.avm.server.dto.ValidationResponse;
 
 import java.io.IOException;
 
@@ -19,7 +20,7 @@ public class ValidateParametersEndpoint implements HttpHandler {
             body.validateDocument();
             body.validateSigningParameters();
 
-            EndpointUtils.respondWith("OK", exchange);
+            EndpointUtils.respondWith(new ValidationResponse("OK"), exchange);
 
         } catch (JsonSyntaxException | IOException e) {
             var response = ErrorResponse.buildFromException(new MalformedBodyException(e.getMessage(), e));

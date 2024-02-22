@@ -320,7 +320,7 @@
                             <provider>BELLSOFT</provider>
                             <providerConfig>
                                 <type>jdk</type>
-                                <version>17.0.7+7</version>
+                                <version>17.0.10+13</version>
                                 <arch>amd64-full</arch>
                             </providerConfig>
                         </configuration>
@@ -371,13 +371,6 @@
                                 <module>java.logging</module>
                                 <module>java.sql</module>
                                 <module>java.scripting</module>
-                                <module>javafx.base</module>
-                                <module>javafx.controls</module>
-                                <module>javafx.fxml</module>
-                                <module>javafx.graphics</module>
-                                <module>javafx.web</module>
-                                <!-- Needed for sun.misc.Unsafe used by JavaFX, shouldn't be used in
-                                our code -->
                                 <module>jdk.unsupported</module>
                                 <module>jdk.httpserver</module>
                             </addModules>

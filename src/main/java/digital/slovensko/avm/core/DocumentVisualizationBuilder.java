@@ -53,17 +53,17 @@ public class DocumentVisualizationBuilder {
         if (isDocumentSupportingTransformation(documentToDisplay) && isTranformationAvailable(transformation)) {
             var transformationOutputMimeType = parameters.getXsltDestinationType();
 
-            if (transformationOutputMimeType.equals("HTML"))
-                return new InMemoryDocument(EFormUtils.transform(documentToDisplay, transformation).getBytes(), documentToDisplay.getName(), documentToDisplay.getMimeType());
+            if ("HTML".equals(transformationOutputMimeType) || "XHTML".equals(transformationOutputMimeType))
+                return new InMemoryDocument(EFormUtils.transform(documentToDisplay, transformation).getBytes(), documentToDisplay.getName(), MimeTypeEnum.HTML);
 
             if (transformationOutputMimeType.equals("TXT"))
-                return new InMemoryDocument(EFormUtils.transform(documentToDisplay, transformation).getBytes(), documentToDisplay.getName(), documentToDisplay.getMimeType());
+                return new InMemoryDocument(EFormUtils.transform(documentToDisplay, transformation).getBytes(), documentToDisplay.getName(), MimeTypeEnum.TEXT);
 
             return null;
         }
 
         if (documentToDisplay.getMimeType().equals(MimeTypeEnum.HTML))
-            return new InMemoryDocument(EFormUtils.transform(documentToDisplay, transformation).getBytes(), documentToDisplay.getName(), documentToDisplay.getMimeType());
+            return documentToDisplay;
 
         if (documentToDisplay.getMimeType().equals(MimeTypeEnum.TEXT))
             return documentToDisplay;
