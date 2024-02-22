@@ -5,7 +5,7 @@ import digital.slovensko.avm.server.dto.DocumentResponse;
 import digital.slovensko.avm.server.dto.OriginalSignRequestBody;
 import digital.slovensko.avm.server.dto.SignResponse;
 import digital.slovensko.avm.server.dto.SignerRecord;
-import digital.slovensko.avm.server.errors.MalformedBodyException;
+import digital.slovensko.avm.core.errors.MalformedBodyException;
 import eu.europa.esig.dss.model.DSSDocument;
 import eu.europa.esig.dss.pdfa.PDFAStructureValidator;
 import eu.europa.esig.dss.spi.x509.tsp.TSPSource;
@@ -15,7 +15,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.security.cert.CertificateException;
-import java.util.Base64;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 

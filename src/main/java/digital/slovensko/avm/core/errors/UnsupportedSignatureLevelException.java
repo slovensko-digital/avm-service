@@ -1,4 +1,4 @@
-package digital.slovensko.avm.server.errors;
+package digital.slovensko.avm.core.errors;
 
 import digital.slovensko.avm.core.errors.AutogramException;
 

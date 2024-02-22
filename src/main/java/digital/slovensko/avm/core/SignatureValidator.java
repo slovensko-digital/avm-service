@@ -175,7 +175,6 @@ public class SignatureValidator {
     }
 
     public synchronized boolean areTLsLoaded() {
-        // TODO: consider validation turned off as well
         return validationJob.getSummary().getNumberOfProcessedTLs() > 0;
     }
 }

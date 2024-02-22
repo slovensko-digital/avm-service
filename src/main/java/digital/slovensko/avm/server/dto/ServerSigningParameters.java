@@ -11,9 +11,9 @@ import java.util.Base64;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 
 import digital.slovensko.avm.core.SigningParameters;
-import digital.slovensko.avm.server.errors.MalformedBodyException;
-import digital.slovensko.avm.server.errors.RequestValidationException;
-import digital.slovensko.avm.server.errors.UnsupportedSignatureLevelException;
+import digital.slovensko.avm.core.errors.MalformedBodyException;
+import digital.slovensko.avm.core.errors.RequestValidationException;
+import digital.slovensko.avm.core.errors.UnsupportedSignatureLevelException;
 import eu.europa.esig.dss.enumerations.ASiCContainerType;
 import eu.europa.esig.dss.enumerations.DigestAlgorithm;
 import eu.europa.esig.dss.enumerations.MimeType;

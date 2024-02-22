@@ -5,7 +5,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import digital.slovensko.avm.core.errors.ResponseNetworkErrorException;
 import digital.slovensko.avm.server.dto.ErrorResponse;
-import digital.slovensko.avm.server.errors.EmptyBodyException;
+import digital.slovensko.avm.core.errors.EmptyBodyException;
 
 import java.io.IOException;
 

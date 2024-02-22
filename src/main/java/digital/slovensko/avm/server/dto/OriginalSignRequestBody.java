@@ -5,8 +5,8 @@ import java.util.Base64;
 import digital.slovensko.avm.core.errors.TransformationParsingErrorException;
 
 import digital.slovensko.avm.core.SigningParameters;
-import digital.slovensko.avm.server.errors.MalformedBodyException;
-import digital.slovensko.avm.server.errors.RequestValidationException;
+import digital.slovensko.avm.core.errors.MalformedBodyException;
+import digital.slovensko.avm.core.errors.RequestValidationException;
 import eu.europa.esig.dss.enumerations.MimeType;
 import eu.europa.esig.dss.model.InMemoryDocument;
 import eu.europa.esig.dss.spi.x509.tsp.TSPSource;

@@ -7,7 +7,7 @@ import digital.slovensko.avm.core.errors.AutogramException;
 import digital.slovensko.avm.server.EndpointUtils;
 import digital.slovensko.avm.server.dto.ErrorResponse;
 import digital.slovensko.avm.server.dto.OriginalSignRequestBody;
-import digital.slovensko.avm.server.errors.MalformedBodyException;
+import digital.slovensko.avm.core.errors.MalformedBodyException;
 
 import java.io.IOException;
 
