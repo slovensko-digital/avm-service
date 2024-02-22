@@ -1,8 +1,10 @@
 package digital.slovensko.avm.core;
 
 import digital.slovensko.avm.core.errors.TransformationException;
+import digital.slovensko.avm.server.dto.DocumentResponse;
 import digital.slovensko.avm.server.dto.OriginalSignRequestBody;
 import digital.slovensko.avm.server.dto.SignResponse;
+import digital.slovensko.avm.server.dto.SignerRecord;
 import digital.slovensko.avm.server.errors.MalformedBodyException;
 import eu.europa.esig.dss.model.DSSDocument;
 import eu.europa.esig.dss.pdfa.PDFAStructureValidator;
@@ -58,8 +60,7 @@ public class AVM {
         var issuer = result.getCertificate().getIssuer().getPrincipal().toString();
 
         try {
-            var b64document = Base64.getEncoder().encodeToString(result.getDocument().openStream().readAllBytes());
-            return new SignResponse(b64document, signer, issuer);
+            return new SignResponse(DocumentResponse.buildFormDSS(result.getDocument()), new SignerRecord(signer, issuer));
         } catch (IOException e) {
             throw new MalformedBodyException("", "");
         }
