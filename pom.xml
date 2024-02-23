@@ -424,7 +424,7 @@
                             ${project.build.directory}${file.separator}${project.artifactId}-${project.version}-${platform}</argument>
                         <argument>${project.build.directory}${file.separator}preparedJDK</argument>
                         <argument>
-                            ${project.basedir}${file.separator}src${file.separator}main${file.separator}resources${file.separator}digital${file.separator}slovensko${file.separator}autogram${file.separator}microservice</argument>
+                            ${project.basedir}${file.separator}src${file.separator}main${file.separator}resources${file.separator}digital${file.separator}slovensko${file.separator}avm</argument>
                         <argument>${platform}</argument>
                         <argument>${project.version}</argument>
                         <argument>${project.build.directory}</argument>
