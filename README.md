@@ -1,6 +1,6 @@
-# AVM - Microservice
+# AVM Service
 
-This is a stateless service intended to be used in combination with AutogramMicroservice Server API.
+This is a stateless microservice intended to be used in combination with AVM Server.
 
 ## How to run it
 
