@@ -81,7 +81,7 @@ public class DocumentVisualizationBuilder {
     private static DSSDocument transformImageToHTML(DSSDocument documentToDisplay) {
         try {
             var content = Base64.getEncoder().encode(documentToDisplay.openStream().readAllBytes());
-            String temp = "<img src=\"data:" + documentToDisplay.getMimeType().getMimeTypeString() + ";base64," + new String(content) + "\" />";
+            String temp = "<img style=\" width: 100%; height: 100%; object-fit: contain;\" src=\"data:" + documentToDisplay.getMimeType().getMimeTypeString() + ";base64," + new String(content) + "\" />";
             return new InMemoryDocument(
                 temp.getBytes(),
                 documentToDisplay.getName(),
