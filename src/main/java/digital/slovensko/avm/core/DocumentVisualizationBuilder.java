@@ -1,6 +1,7 @@
 package digital.slovensko.avm.core;
 
 import java.io.IOException;
+import java.util.Base64;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -78,17 +79,17 @@ public class DocumentVisualizationBuilder {
     }
 
     private static DSSDocument transformImageToHTML(DSSDocument documentToDisplay) {
-        return new InMemoryDocument("""
-                    <!DOCTYPE html>
-                    <html lang="en">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Image visualization</title>
-                    </head>
-                    <body style="background-color: green"></body>
-                    </html>""".getBytes(),
+        try {
+            var content = Base64.getEncoder().encode(documentToDisplay.openStream().readAllBytes());
+            String temp = "<img src=\"data:" + documentToDisplay.getMimeType().getMimeTypeString() + ";base64," + new String(content) + "\" />";
+            return new InMemoryDocument(
+                temp.getBytes(),
                 documentToDisplay.getName(),
                 MimeTypeEnum.HTML);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private boolean isTranformationAvailable(String transformation) {
