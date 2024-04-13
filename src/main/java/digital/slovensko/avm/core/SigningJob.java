@@ -63,8 +63,26 @@ public class SigningJob {
             throw new DataToSignMismatchException();
 
         var doc = service.signDocument(document, signatureParameters, signatureValue);
+        doc.setName(generatePrettyName(doc.getName(), document.getName()));
+
 
         return new SignedDocument(doc, token);
+    }
+
+    private static String generatePrettyName(String newName, String originalName) {
+        var lastDotIndex = originalName.lastIndexOf('.');
+        var nameWithoutExtension = lastDotIndex == -1 ? originalName : originalName.substring(0, lastDotIndex);
+        var extension = generatePrettyExtension(newName.substring(newName.lastIndexOf('.') + 1));
+
+        return nameWithoutExtension + "_signed." + extension;
+    }
+
+    private static String generatePrettyExtension(String extension) {
+        return switch (extension) {
+            case "scs" -> "asics";
+            case "sce" -> "asice";
+            default -> extension;
+        };
     }
 
     private static AbstractSignatureService getServiceForSignatureLevel(SignatureForm signatureForm, ASiCContainerType container, CertificateVerifier certificateVerifier) {
