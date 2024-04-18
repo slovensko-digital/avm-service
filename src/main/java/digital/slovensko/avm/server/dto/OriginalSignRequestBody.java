@@ -52,7 +52,7 @@ public class OriginalSignRequestBody {
             if (documentSignatureLevel == null)
                 throw new RequestValidationException("Parameters are required for yet to be signed document", "");
 
-            parameters = new ServerSigningParameters();
+            parameters = ServerSigningParameters.buildEmpty();
         }
 
         parameters.validate(getDocument().getMimeType(), documentSignatureLevel);

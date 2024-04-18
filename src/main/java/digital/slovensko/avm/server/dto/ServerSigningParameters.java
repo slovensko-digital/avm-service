@@ -93,28 +93,29 @@ public class ServerSigningParameters {
         this.transformationTargetEnvironment = transformationTargetEnvironment;
     }
 
-    public ServerSigningParameters() {
-        this.level = null;
-        this.container = null;
-        this.containerXmlns = null;
-        this.packaging = null;
-        this.digestAlgorithm = null;
-        this.en319132 = null;
-        this.infoCanonicalization = null;
-        this.propertiesCanonicalization = null;
-        this.keyInfoCanonicalization = null;
-        this.schema = null;
-        this.transformation = null;
-        this.identifier = null;
-        this.checkPDFACompliance = false;
-        this.autoLoadEform = true;
-        this.embedUsedSchemas = false;
-        this.schemaIdentifier = null;
-        this.transformationIdentifier = null;
-        this.transformationLanguage = null;
-        this.transformationMediaDestinationTypeDescription = null;
-        this.transformationTargetEnvironment = null;
-
+    public static ServerSigningParameters buildEmpty() {
+        return new ServerSigningParameters(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                true,
+                false,
+                null,
+                null,
+                null,
+                null,
+                null);
     };
 
     public SigningParameters getSigningParameters(boolean isBase64, DSSDocument document, TSPSource tspSource, boolean plainXmlEnabled) {
