@@ -9,6 +9,7 @@ import digital.slovensko.avm.core.eforms.EFormUtils;
 import digital.slovensko.avm.core.eforms.XDCBuilder;
 import digital.slovensko.avm.core.eforms.XDCValidator;
 import digital.slovensko.avm.core.errors.AutogramException;
+import digital.slovensko.avm.core.errors.CryptographicSignatureVerificationException;
 import digital.slovensko.avm.core.errors.DataToSignMismatchException;
 import digital.slovensko.avm.util.DSSUtils;
 import eu.europa.esig.dss.asic.cades.signature.ASiCWithCAdESService;
@@ -55,11 +56,16 @@ public class SigningJob {
         if (!new String(Base64.getEncoder().encode(dataToSign.getBytes())).equals(dataToSignStructure.dataToSign()))
             throw new DataToSignMismatchException();
 
-        var doc = service.signDocument(document, signatureParameters, signatureValue);
-        doc.setName(generatePrettyName(doc.getName(), document.getName()));
+        try {
+            var doc = service.signDocument(document, signatureParameters, signatureValue);
+            doc.setName(generatePrettyName(doc.getName(), document.getName()));
+            return new SignedDocument(doc, token);
+        } catch (DSSException e) {
+            if (e.getMessage().contains("Cryptographic signature verification has failed"))
+                throw new CryptographicSignatureVerificationException();
 
-
-        return new SignedDocument(doc, token);
+            throw e;
+        }
     }
 
     private static String generatePrettyName(String newName, String originalName) {
