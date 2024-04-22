@@ -39,7 +39,7 @@ public class ErrorResponse {
                 "TransformationParsingErrorException" -> new ErrorResponse(422, "UNPROCESSABLE_INPUT", (AutogramException) e);
             case "MultipleOriginalDocumentsFoundException" -> new ErrorResponse(422, "MULTIPLE_ORIGINAL_DOCUMENTS", (AutogramException) e);
             case "OriginalDocumentNotFoundException" -> new ErrorResponse(422, "ORIGINAL_DOCUMENT_NOT_FOUND", (AutogramException) e);
-            case "CryptographicSignatureVerificationException" -> new ErrorResponse(400, "CRYPTOGRAPHIC_SIGNATURE_VERIFICATION_FAILED", (AutogramException) e);
+            case "CryptographicSignatureVerificationException" -> new ErrorResponse(400, "SIGNATURE_NOT_IN_TACT", (AutogramException) e);
             case "MalformedBodyException" -> new ErrorResponse(400, "MALFORMED_INPUT", (AutogramException) e);
             case "AutogramException" -> new ErrorResponse(502, "SIGNING_FAILED", (AutogramException) e);
             case "EmptyBodyException" -> new ErrorResponse(400, "EMPTY_BODY", (AutogramException) e);
