@@ -230,6 +230,9 @@ public class SigningParameters {
         if (isAsice(document.getMimeType()))
             extractedDocument = AsicContainerUtils.getOriginalDocument(document);
 
+        if (transformation == null && (isXML(extractedDocument.getMimeType()) || isXDC(extractedDocument.getMimeType())))
+            autoLoadEform = true;
+
         if (isXML(extractedDocument.getMimeType()) && XDCValidator.isXDCContent(extractedDocument))
             extractedDocument.setMimeType(XML_DATACONTAINER);
 
