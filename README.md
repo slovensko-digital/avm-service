@@ -1,8 +1,8 @@
 # AVM (Autogram v mobile) Service
 
-Java microservice slúžiaci na výrobu elektronických podpisov podľa eIDAS, vizualizáciu dokumentov a v budúcnosti aj na overovanie podpisov.
+Java microservice slúžiaci na výrobu elektronických podpisov podľa eIDAS, vizualizáciu dokumentov a v budúcnosti aj na overovanie podpisov. Zdrojový kód tohto microservicu je z veľkej časti prebratý z projektu [Autogram](https://sluzby.slovensko.digital/autogram/), ktorý pomáhal tvoriť Solver IT s.r.o.
 
-Ide o súčasť riešenia [Autogram v mobile](https://sluzby.slovensko.digital/autogram-v-mobile/), ktoré vytvorili freevision s.r.o., Služby Slovensko.Digital s.r.o. a dobrovoľníkmi pod EUPL-1.2 licenciou. Prevádzkovateľom je Služby Slovensko.Digital s.r.o.. Prípadné issues riešime v [GitHub projekte](https://github.com/orgs/slovensko-digital/projects/5) alebo rovno v tomto repozitári.
+Ide o súčasť riešenia [Autogram v mobile](https://sluzby.slovensko.digital/autogram-v-mobile/), ktoré vytvorili freevision s.r.o., Služby Slovensko.Digital s.r.o. a dobrovoľníci pod EUPL v1.2 licenciou. Prevádzkovateľom je Služby Slovensko.Digital s.r.o.. Prípadné issues riešime v [GitHub projekte](https://github.com/orgs/slovensko-digital/projects/5) alebo rovno v tomto repozitári.
 
 Projekt sa skladá z viacerých častí:
 - **Server**
