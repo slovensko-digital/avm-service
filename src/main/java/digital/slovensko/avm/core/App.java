@@ -18,7 +18,7 @@ public class App {
 
     private static final Options options = new Options().
         addOption("h", "help", false, "Print this command line help.").
-        addOption(null, "tsa-server", true, "Url of TimeStamp Authority server that should be used for timestamping in signature level BASELINE_T. If provided, BASELINE_T signatures are made.").
+        addOption(null, "tsa-server", true, "Url of TimeStamp Authority servers that should be used for timestamping in signature level BASELINE_T. Multiple values must be separated by comma. Overrides TSA_SERVER environment variable.").
         addOption("p", "port", true, "Port to listen on.");
 
     public static void start(String[] args) {
@@ -31,7 +31,9 @@ public class App {
             }
 
             var port = Integer.parseInt(cmd.getOptionValue("port", "7200"));
-            var tsaServers = cmd.getOptionValue("tsa-server", "http://tsa.belgium.be/connect,http://tsa.izenpe.com,http://ts.quovadisglobal.com/eu,http://tsa.sep.bg,http://kstamp.keynectis.com/KSign,https://timestamp.sectigo.com/qualified");
+            var tsaServers = cmd.getOptionValue("tsa-server", System.getenv("TSA_SERVER"));
+            if (tsaServers == null)
+                tsaServers = "http://tsa.belgium.be/connect,http://ts.quovadisglobal.com/eu,http://tsa.sep.bg";
 
             var timestampDataLoader = new TimestampDataLoader();
             var tspSource = new CompositeTSPSource();
