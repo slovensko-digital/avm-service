@@ -1,16 +1,13 @@
-package digital.slovensko.avm.core.eforms;
+package digital.slovensko.avm.core.eforms.xdc;
 
+import digital.slovensko.avm.core.AutogramMimeType;
 import digital.slovensko.avm.core.SigningParameters;
 import digital.slovensko.avm.core.eforms.dto.XsltParams;
 import digital.slovensko.avm.core.errors.TransformationException;
 import digital.slovensko.avm.util.XMLUtils;
-
-import static digital.slovensko.avm.core.eforms.EFormUtils.*;
-
 import eu.europa.esig.dss.enumerations.DigestAlgorithm;
 import eu.europa.esig.dss.model.DSSDocument;
 import eu.europa.esig.dss.model.InMemoryDocument;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -26,6 +23,10 @@ import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import static digital.slovensko.avm.core.eforms.EFormUtils.*;
+import static digital.slovensko.avm.util.DSSUtils.getXdcfFilename;
+import static digital.slovensko.avm.util.XMLUtils.getSecureDocumentBuilder;
+
 public abstract class XDCBuilder {
     private static final Charset ENCODING = StandardCharsets.UTF_8;
 
@@ -33,11 +34,14 @@ public abstract class XDCBuilder {
         var identifier = params.getIdentifier();
         var lastSlashIndex = identifier.lastIndexOf("/");
         if (lastSlashIndex == -1)
-            throw new RuntimeException("Identifier contains no slash: " + identifier);
+            throw new TransformationException("Nastala chyba počas transformácie dokumentu", "XDC identifikátor formulára neobsahuje žiadnu lomku: " + identifier);
 
         var identifierVersion = identifier.substring(lastSlashIndex + 1);
+        if (!identifierVersion.matches("[v0-9.]+"))
+            identifierVersion = "1.0";
+
         try {
-            var parsedDocument = XMLUtils.getSecureDocumentBuilder().newDocument();
+            var parsedDocument = getSecureDocumentBuilder().newDocument();
             var importedNode = parsedDocument.importNode(document.getDocumentElement(), true);
             parsedDocument.appendChild(importedNode);
             var usedSchemas = params.shouldEmbedSchemas()
@@ -52,10 +56,8 @@ public abstract class XDCBuilder {
 
             var content = getDocumentContent(transformedDocument).getBytes(ENCODING);
 
-            return new InMemoryDocument(content, filename);
+            return new InMemoryDocument(content, getXdcfFilename(filename), AutogramMimeType.XML_DATACONTAINER_WITH_CHARSET);
 
-        } catch (TransformationException e) {
-            throw e;
         } catch (Exception e) {
             throw new TransformationException("Nastala chyba počas transformácie dokumentu",
                     "Nastala chyba počas transformácie dokumentu", e);
@@ -99,11 +101,10 @@ public abstract class XDCBuilder {
             boolean shouldEmbedSchemas) {
         var element = document.createElement("xdc:XMLData");
         element.setAttribute("ContentType", "application/xml; charset=UTF-8");
+        element.setAttribute("Identifier", identifierUri);
 
-        if (!shouldEmbedSchemas) {
-            element.setAttribute("Identifier", identifierUri);
+        if (!shouldEmbedSchemas)
             element.setAttribute("Version", identifierVersion);
-        }
 
         return element;
     }
@@ -169,7 +170,7 @@ public abstract class XDCBuilder {
     private static Element createUsedXSDEmbedded(Document document, String xsdSchema)
             throws ParserConfigurationException, IOException, SAXException {
         var element = document.createElement("xdc:UsedXSDEmbedded");
-        var parsedSchema = XMLUtils.getSecureDocumentBuilder().parse(new InputSource(new StringReader(xsdSchema)));
+        var parsedSchema = getSecureDocumentBuilder().parse(new InputSource(new StringReader(xsdSchema)));
         var importedNode = document.importNode(parsedSchema.getFirstChild(), true);
         element.appendChild(importedNode);
 
@@ -185,7 +186,7 @@ public abstract class XDCBuilder {
         if (xsltParams.target() != null)
             element.setAttribute("TargetEnvironment", xsltParams.target());
 
-        var parsedSchema = XMLUtils.getSecureDocumentBuilder().parse(new InputSource(new StringReader(xsltSchema)));
+        var parsedSchema = getSecureDocumentBuilder().parse(new InputSource(new StringReader(xsltSchema)));
         var importedNode = document.importNode(parsedSchema.getFirstChild(), true);
         element.appendChild(importedNode);
 

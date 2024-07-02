@@ -1,23 +1,22 @@
-package digital.slovensko.avm.core.eforms;
+package digital.slovensko.avm.core.eforms.xdc;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.io.StringReader;
-
+import digital.slovensko.avm.core.AutogramMimeType;
+import digital.slovensko.avm.core.eforms.EFormUtils;
 import digital.slovensko.avm.core.errors.OriginalDocumentNotFoundException;
 import digital.slovensko.avm.core.errors.XMLValidationException;
 import digital.slovensko.avm.util.XMLUtils;
+import eu.europa.esig.dss.enumerations.DigestAlgorithm;
+import eu.europa.esig.dss.model.DSSDocument;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import javax.xml.transform.stream.StreamSource;
-
-import digital.slovensko.avm.core.AutogramMimeType;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static digital.slovensko.avm.core.eforms.EFormUtils.*;
-import eu.europa.esig.dss.enumerations.DigestAlgorithm;
-import eu.europa.esig.dss.model.DSSDocument;
 
 public abstract class XDCValidator {
     private static final Charset ENCODING = StandardCharsets.UTF_8;

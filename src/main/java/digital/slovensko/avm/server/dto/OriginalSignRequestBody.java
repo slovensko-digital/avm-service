@@ -18,11 +18,18 @@ public class OriginalSignRequestBody {
     private final Document document;
     private ServerSigningParameters parameters;
     private final String payloadMimeType;
+    private final String batchId;
 
     public OriginalSignRequestBody(Document document, ServerSigningParameters parameters, String payloadMimeType) {
+        this(document, parameters, payloadMimeType, null);
+    }
+
+    public OriginalSignRequestBody(Document document, ServerSigningParameters parameters, String payloadMimeType,
+            String batchId) {
         this.document = document;
         this.parameters = parameters;
         this.payloadMimeType = payloadMimeType;
+        this.batchId = batchId;
     }
 
     public void validateDocument() throws RequestValidationException, MalformedBodyException {
@@ -34,6 +41,16 @@ public class OriginalSignRequestBody {
 
         if (document.getContent() == null)
             throw new RequestValidationException("Document.Content is required", "");
+
+//      TODO: resolve values at class instantiation
+        resolveSigningLevel();
+    }
+
+    private void resolveSigningLevel() throws RequestValidationException {
+        if (parameters == null)
+            parameters = new ServerSigningParameters();
+
+        parameters.resolveSigningLevel(getDocument());
     }
 
     public InMemoryDocument getDocument() {
@@ -45,17 +62,10 @@ public class OriginalSignRequestBody {
 
     public void validateSigningParameters() throws RequestValidationException, MalformedBodyException,
             TransformationParsingErrorException {
+        if (parameters == null)
+            throw new RequestValidationException("Parameters are required", "");
 
-        var documentSignatureLevel = SignatureValidator.getSignedDocumentSignatureLevel(getDocument());
-
-        if (parameters == null) {
-            if (documentSignatureLevel == null)
-                throw new RequestValidationException("Parameters are required for yet to be signed document", "");
-
-            parameters = ServerSigningParameters.buildEmpty();
-        }
-
-        parameters.validate(getDocument().getMimeType(), documentSignatureLevel);
+        parameters.validate(getDocument().getMimeType());
     }
 
     public SigningParameters getParameters(TSPSource tspSource, boolean plainXmlEnabled) {

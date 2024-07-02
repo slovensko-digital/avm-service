@@ -1,16 +1,15 @@
 package digital.slovensko.avm.server.dto;
 
-import static digital.slovensko.avm.core.AutogramMimeType.isAsice;
-import static digital.slovensko.avm.core.AutogramMimeType.isXDC;
-import static digital.slovensko.avm.core.AutogramMimeType.isXML;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 
+import digital.slovensko.avm.core.SignatureValidator;
 import digital.slovensko.avm.core.SigningParameters;
+import digital.slovensko.avm.core.eforms.dto.EFormAttributes;
+import digital.slovensko.avm.core.eforms.dto.XsltParams;
 import digital.slovensko.avm.core.errors.MalformedBodyException;
 import digital.slovensko.avm.core.errors.RequestValidationException;
 import digital.slovensko.avm.core.errors.UnsupportedSignatureLevelException;
@@ -22,7 +21,10 @@ import eu.europa.esig.dss.enumerations.SignatureForm;
 import eu.europa.esig.dss.enumerations.SignatureLevel;
 import eu.europa.esig.dss.enumerations.SignaturePackaging;
 import eu.europa.esig.dss.model.DSSDocument;
+import eu.europa.esig.dss.model.InMemoryDocument;
 import eu.europa.esig.dss.spi.x509.tsp.TSPSource;
+
+import static digital.slovensko.avm.core.AutogramMimeType.*;
 
 public class ServerSigningParameters {
     public enum LocalCanonicalizationMethod {
@@ -40,7 +42,7 @@ public class ServerSigningParameters {
         XHTML
     }
 
-    private final ASiCContainerType container;
+    private ASiCContainerType container;
     private SignatureLevel level;
     private final String containerXmlns;
     private final String schema;
@@ -53,6 +55,7 @@ public class ServerSigningParameters {
     private final LocalCanonicalizationMethod keyInfoCanonicalization;
     private final String identifier;
     private final boolean checkPDFACompliance;
+    private final int visualizationWidth;
     private final boolean autoLoadEform;
     private final boolean embedUsedSchemas;
     private final String schemaIdentifier;
@@ -60,6 +63,8 @@ public class ServerSigningParameters {
     private final String transformationLanguage;
     private final TransformationOutputMimeType transformationMediaDestinationTypeDescription;
     private final String transformationTargetEnvironment;
+    private final String fsFormId;
+
 
     public ServerSigningParameters(SignatureLevel level, ASiCContainerType container,
             String containerFilename, String containerXmlns, SignaturePackaging packaging,
@@ -70,7 +75,7 @@ public class ServerSigningParameters {
             String Identifier, boolean checkPDFACompliance,
             boolean autoLoadEform, boolean embedUsedSchemas, String schemaIdentifier, String transformationIdentifier,
             String transformationLanguage, TransformationOutputMimeType transformationMediaDestinationTypeDescription,
-            String transformationTargetEnvironment) {
+            String transformationTargetEnvironment, String fsFormId) {
         this.level = level;
         this.container = container;
         this.containerXmlns = containerXmlns;
@@ -84,6 +89,7 @@ public class ServerSigningParameters {
         this.transformation = transformation;
         this.identifier = Identifier;
         this.checkPDFACompliance = checkPDFACompliance;
+        this.visualizationWidth = -1;
         this.autoLoadEform = autoLoadEform;
         this.embedUsedSchemas = embedUsedSchemas;
         this.schemaIdentifier = schemaIdentifier;
@@ -91,52 +97,73 @@ public class ServerSigningParameters {
         this.transformationLanguage = transformationLanguage;
         this.transformationMediaDestinationTypeDescription = transformationMediaDestinationTypeDescription;
         this.transformationTargetEnvironment = transformationTargetEnvironment;
+        this.fsFormId = fsFormId;
     }
 
-    public static ServerSigningParameters buildEmpty() {
-        return new ServerSigningParameters(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                true,
-                false,
-                null,
-                null,
-                null,
-                null,
-                null);
-    };
+    public ServerSigningParameters() {
+        this.containerXmlns = null;
+        this.packaging = null;
+        this.digestAlgorithm = null;
+        this.en319132 = null;
+        this.infoCanonicalization = null;
+        this.propertiesCanonicalization = null;
+        this.keyInfoCanonicalization = null;
+        this.schema = null;
+        this.transformation = null;
+        this.identifier = null;
+        this.checkPDFACompliance = false;
+        this.visualizationWidth = -1;
+        this.autoLoadEform = false;
+        this.embedUsedSchemas = false;
+        this.schemaIdentifier = null;
+        this.transformationIdentifier = null;
+        this.transformationLanguage = null;
+        this.transformationMediaDestinationTypeDescription = null;
+        this.transformationTargetEnvironment = null;
+        this.fsFormId = null;
+    }
 
     public SigningParameters getSigningParameters(boolean isBase64, DSSDocument document, TSPSource tspSource, boolean plainXmlEnabled) {
-        return SigningParameters.buildFromRequest(
-                getSignatureLevel(),
-                getContainer(),
+        var xsltParams = new XsltParams(
+                transformationIdentifier,
+                transformationLanguage,
+                getTransformationMediaDestinationTypeDescription(),
+                transformationTargetEnvironment,
+                null);
+
+        var eFormAttributes = new EFormAttributes(
+                identifier,
+                getTransformation(isBase64),
+                getSchema(isBase64),
                 containerXmlns,
-                packaging,
+                schemaIdentifier,
+                xsltParams,
+                getBoolean(embedUsedSchemas));
+
+        return SigningParameters.buildParameters(
+                getSignatureLevel(),
                 digestAlgorithm,
-                en319132,
+                getContainer(),
+                packaging,
+                getBoolean(en319132),
                 getCanonicalizationMethodString(infoCanonicalization),
                 getCanonicalizationMethodString(propertiesCanonicalization),
                 getCanonicalizationMethodString(keyInfoCanonicalization),
-                getSchema(isBase64),
-                getTransformation(isBase64),
-                identifier, checkPDFACompliance, autoLoadEform, embedUsedSchemas,
-                schemaIdentifier, transformationIdentifier, transformationLanguage,
-                getTransformationMediaDestinationTypeDescription(), transformationTargetEnvironment,
+                eFormAttributes,
+                autoLoadEform,
+                getFsFormId(),
+                getBoolean(checkPDFACompliance),
+                visualizationWidth,
                 document,
                 tspSource,
                 plainXmlEnabled);
+    }
+
+    private static boolean getBoolean(Boolean variable) {
+        if (variable == null)
+            return false;
+
+        return variable;
     }
 
     private String getTransformation(boolean isBase64) throws MalformedBodyException {
@@ -200,34 +227,51 @@ public class ServerSigningParameters {
         return container;
     }
 
-    public void validate(MimeType mimeType, SignatureLevel documentSignatureLevel) throws RequestValidationException {
-        if (level == null) {
-            if (documentSignatureLevel == null)
-                throw new RequestValidationException("Parameters.Level is required", "");
+    public void resolveSigningLevel(InMemoryDocument document) throws RequestValidationException {
+        if (level != null)
+            return;
 
-            level = documentSignatureLevel;
-        }
+        var report = SignatureValidator.getSignedDocumentSimpleReport(document);
+        var signedLevel = SignatureValidator.getSignedDocumentSignatureLevel(report);
+        if (signedLevel == null)
+            throw new RequestValidationException("Parameters.Level can't be empty if document is not signed yet", "");
 
-        if (documentSignatureLevel != null && documentSignatureLevel.getSignatureForm() != level.getSignatureForm())
-            try {
-                level = SignatureLevel.valueOf(level.name().replace(level.getSignatureForm().name(), documentSignatureLevel.getSignatureForm().name()));
-            } catch (Exception e) {
-                throw new RequestValidationException("Malformed or mismatched signature level", "");
-            }
+        container = report.getContainerType();
+        level = switch (signedLevel.getSignatureForm()) {
+            case PAdES -> SignatureLevel.PAdES_BASELINE_B;
+            case XAdES -> SignatureLevel.XAdES_BASELINE_B;
+            case CAdES -> SignatureLevel.CAdES_BASELINE_B;
+            default -> null;
+        };
+
+        if (level == null)
+            throw new RequestValidationException("Signed document has unsupported SignatureLevel", "");
+    }
+
+    private String getFsFormId() {
+        if (fsFormId == null || fsFormId.isEmpty())
+            return null;
+
+        return fsFormId;
+    }
+
+    public void validate(MimeType mimeType) throws RequestValidationException {
+        if (level == null)
+            throw new RequestValidationException("Parameters.Level is required", "");
 
         var supportedLevels = Arrays.asList(
                 SignatureLevel.XAdES_BASELINE_B,
-                SignatureLevel.XAdES_BASELINE_T,
-                SignatureLevel.CAdES_BASELINE_B,
-                SignatureLevel.CAdES_BASELINE_T,
                 SignatureLevel.PAdES_BASELINE_B,
+                SignatureLevel.CAdES_BASELINE_B,
+                SignatureLevel.XAdES_BASELINE_T,
+                SignatureLevel.CAdES_BASELINE_T,
                 SignatureLevel.PAdES_BASELINE_T);
 
         if (!supportedLevels.contains(level))
             throw new UnsupportedSignatureLevelException(level.name());
 
         if (level.getSignatureForm() == SignatureForm.PAdES) {
-            if (!mimeType.equals(MimeTypeEnum.PDF))
+            if (!isPDF(mimeType))
                 throw new RequestValidationException("PayloadMimeType and Parameters.Level mismatch",
                         "Parameters.Level: PAdES is not supported for this payload: " + mimeType.getMimeTypeString());
 

@@ -9,12 +9,12 @@ import digital.slovensko.avm.core.errors.MalformedBodyException;
 import eu.europa.esig.dss.model.DSSDocument;
 import eu.europa.esig.dss.pdfa.PDFAStructureValidator;
 import eu.europa.esig.dss.spi.x509.tsp.TSPSource;
-import eu.europa.esig.dss.validation.reports.Reports;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.security.cert.CertificateException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -27,9 +27,9 @@ public class AVM {
         this.plainXmlEnabled = plainXmlEnabled;
     }
 
-    public Reports checkAndValidateSignatures(DSSDocument document) {
-        var reports = SignatureValidator.getInstance().getSignatureValidationReport(document);
-        if (reports.getSimpleReport().getSignatureIdList().isEmpty())
+    public ValidationReports checkAndValidateSignatures(SigningJob job) {
+        var reports = SignatureValidator.getInstance().getSignatureValidationReport(job);
+        if (!reports.haveSignatures())
             return null;
 
         return reports;
@@ -40,8 +40,8 @@ public class AVM {
         return result.isCompliant();
     }
 
-    public void initializeSignatureValidator(ScheduledExecutorService scheduledExecutorService, ExecutorService cachedExecutorService) {
-        SignatureValidator.getInstance().initialize(cachedExecutorService);
+    public void initializeSignatureValidator(ScheduledExecutorService scheduledExecutorService, ExecutorService cachedExecutorService, List<String> tlCountries) {
+        SignatureValidator.getInstance().initialize(cachedExecutorService, tlCountries);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> SignatureValidator.getInstance().refresh(),
                 480, 480, java.util.concurrent.TimeUnit.MINUTES);
