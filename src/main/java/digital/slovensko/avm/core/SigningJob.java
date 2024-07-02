@@ -74,12 +74,6 @@ public class SigningJob {
             throw e;
         }
 
-        var documentValidator = createDocumentValidator(doc);
-        documentValidator.setCertificateVerifier(commonCertificateVerifier);
-        var reports = documentValidator.validateDocument().getSimpleReport();
-        if (!reports.isValid(reports.getSignatureIdList().get(reports.getSignatureIdList().size() - 1)))
-            throw new CryptographicSignatureVerificationException();
-
         return new SignedDocument(doc, token);
     }
 
