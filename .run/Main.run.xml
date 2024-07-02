@@ -3,7 +3,7 @@
     <option name="ALTERNATIVE_JRE_PATH" value="$PROJECT_DIR$/target/jdkCache/LIBERICA_jdk17.0.10+13_linux_amd64-full" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="digital.slovensko.avm.Main" />
-    <module name="autogram" />
+    <module name="avm" />
     <option name="PROGRAM_PARAMETERS" value="-p 7200" />
     <option name="VM_PARAMETERS" value="--add-exports jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED --add-opens java.base/java.security=ALL-UNNAMED --add-opens jdk.crypto.cryptoki/sun.security.pkcs11=ALL-UNNAMED --add-exports java.base/sun.security.x509=ALL-UNNAMED" />
     <method v="2">

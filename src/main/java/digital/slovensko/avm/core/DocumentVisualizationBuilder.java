@@ -66,13 +66,13 @@ public class DocumentVisualizationBuilder {
         if (documentToDisplay.getMimeType().equals(MimeTypeEnum.HTML))
             return documentToDisplay;
 
-        if (documentToDisplay.getMimeType().equals(MimeTypeEnum.TEXT))
+        if (isTxt(documentToDisplay.getMimeType()))
             return documentToDisplay;
 
-        if (documentToDisplay.getMimeType().equals(MimeTypeEnum.PDF))
+        if (isPDF(documentToDisplay.getMimeType()))
             return documentToDisplay;
 
-        if (documentToDisplay.getMimeType().equals(MimeTypeEnum.JPEG) || documentToDisplay.getMimeType().equals(MimeTypeEnum.PNG))
+        if (isImage(documentToDisplay.getMimeType()))
             return transformImageToHTML(documentToDisplay);
 
         return null;
@@ -97,8 +97,6 @@ public class DocumentVisualizationBuilder {
     }
 
     private boolean isDocumentSupportingTransformation(DSSDocument document) {
-        return document.getMimeType().equals(AutogramMimeType.XML_DATACONTAINER)
-            || document.getMimeType().equals(AutogramMimeType.APPLICATION_XML)
-            || document.getMimeType().equals(MimeTypeEnum.XML);
+        return isXDC(document.getMimeType()) || isXML(document.getMimeType());
     }
 }

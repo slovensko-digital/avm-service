@@ -1,13 +1,11 @@
 package digital.slovensko.avm.core;
 
-import java.io.File;
 import java.security.cert.CertificateException;
 import java.util.Base64;
 import java.util.Date;
 
 import digital.slovensko.avm.core.eforms.EFormUtils;
-import digital.slovensko.avm.core.eforms.XDCBuilder;
-import digital.slovensko.avm.core.eforms.XDCValidator;
+import digital.slovensko.avm.core.eforms.xdc.XDCBuilder;
 import digital.slovensko.avm.core.errors.AutogramException;
 import digital.slovensko.avm.core.errors.CryptographicSignatureVerificationException;
 import digital.slovensko.avm.core.errors.DataToSignMismatchException;
@@ -17,8 +15,10 @@ import eu.europa.esig.dss.asic.xades.signature.ASiCWithXAdESService;
 import eu.europa.esig.dss.cades.signature.CAdESService;
 import eu.europa.esig.dss.enumerations.ASiCContainerType;
 import eu.europa.esig.dss.enumerations.SignatureForm;
+import eu.europa.esig.dss.enumerations.SignatureLevel;
 import eu.europa.esig.dss.jades.signature.JAdESService;
 import eu.europa.esig.dss.model.*;
+import eu.europa.esig.dss.pades.PAdESSignatureParameters;
 import eu.europa.esig.dss.pades.signature.PAdESService;
 import eu.europa.esig.dss.signature.AbstractSignatureService;
 import eu.europa.esig.dss.validation.CertificateVerifier;
@@ -26,6 +26,8 @@ import eu.europa.esig.dss.validation.CommonCertificateVerifier;
 import eu.europa.esig.dss.xades.signature.XAdESService;
 
 import static digital.slovensko.avm.core.AutogramMimeType.*;
+import static digital.slovensko.avm.util.DSSUtils.createDocumentValidator;
+import static digital.slovensko.avm.util.DSSUtils.getXdcfFilename;
 
 public class SigningJob {
     private final DSSDocument document;
@@ -52,20 +54,33 @@ public class SigningJob {
         bLevelParameters.setSigningDate(new Date(dataToSignStructure.signingTime()));
         signatureParameters.setBLevelParams(bLevelParameters);
 
+        if (signatureParameters.getSignatureLevel().equals(SignatureLevel.PAdES_BASELINE_T)) {
+            service.setTspSource(getParameters().getTspSource());
+            ((PAdESSignatureParameters)signatureParameters).setContentSize(9472*2);
+        }
+
         var dataToSign = service.getDataToSign(document, signatureParameters);
         if (!new String(Base64.getEncoder().encode(dataToSign.getBytes())).equals(dataToSignStructure.dataToSign()))
             throw new DataToSignMismatchException();
 
+        DSSDocument doc;
         try {
-            var doc = service.signDocument(document, signatureParameters, signatureValue);
+            doc = service.signDocument(document, signatureParameters, signatureValue);
             doc.setName(generatePrettyName(doc.getName(), document.getName()));
-            return new SignedDocument(doc, token);
         } catch (DSSException e) {
             if (e.getMessage().contains("Cryptographic signature verification has failed"))
                 throw new CryptographicSignatureVerificationException();
 
             throw e;
         }
+
+        var documentValidator = createDocumentValidator(doc);
+        documentValidator.setCertificateVerifier(commonCertificateVerifier);
+        var reports = documentValidator.validateDocument().getSimpleReport();
+        if (!reports.isValid(reports.getSignatureIdList().get(reports.getSignatureIdList().size() - 1)))
+            throw new CryptographicSignatureVerificationException();
+
+        return new SignedDocument(doc, token);
     }
 
     private static String generatePrettyName(String newName, String originalName) {
@@ -110,27 +125,26 @@ public class SigningJob {
         bLevelParameters.setSigningDate(signingTime);
         signatureParameters.setBLevelParams(bLevelParameters);
 
+        if (signatureParameters.getSignatureLevel().equals(SignatureLevel.PAdES_BASELINE_T)) {
+            service.setTspSource(getParameters().getTspSource());
+            ((PAdESSignatureParameters)signatureParameters).setContentSize(9472*2);
+        }
+
         var dataToSign = Base64.getEncoder().encode(service.getDataToSign(document, signatureParameters).getBytes());
 
         return new DataToSignStructure(new String(dataToSign), signingTime.getTime(), signingCertificate);
     }
 
-    public static FileDocument createDSSFileDocumentFromFile(File file) {
-        var fileDocument = new FileDocument(file);
-
-        if (isXDC(fileDocument.getMimeType()) || isXML(fileDocument.getMimeType()) && XDCValidator.isXDCContent(fileDocument))
-            fileDocument.setMimeType(AutogramMimeType.XML_DATACONTAINER);
-
-        return fileDocument;
-    }
-
     private static SigningJob build(DSSDocument document, SigningParameters params) {
-        if (params.shouldCreateXdc()) {
-            var mimeType = document.getMimeType();
-            if (!isXDC(mimeType) && !isAsice(mimeType)) {
-                document = XDCBuilder.transform(params, document.getName(), EFormUtils.getXmlFromDocument(document));
-                document.setMimeType(AutogramMimeType.XML_DATACONTAINER);
-            }
+        if (params.shouldCreateXdc() && !isXDC(document.getMimeType()) && !isAsice(document.getMimeType()))
+            document = XDCBuilder.transform(params, document.getName(), EFormUtils.getXmlFromDocument(document));
+
+        if (isTxt(document.getMimeType()))
+            document.setMimeType(AutogramMimeType.TEXT_WITH_CHARSET);
+
+        if (isXDC(document.getMimeType())) {
+            document.setMimeType(AutogramMimeType.XML_DATACONTAINER_WITH_CHARSET);
+            document.setName(getXdcfFilename(document.getName()));
         }
 
         return new SigningJob(document, params);
