@@ -113,53 +113,49 @@ public record ValidationResponseBody(String containerType, String signatureForm,
         }
     }
 
-    record Signature(QualificationResult validationResult, String level, String claimedSigningTime, String bestSigningTime,
+    record Signature(String validationResult, String level, String claimedSigningTime, String bestSigningTime,
                      CertificateInfo signingCertificate, boolean areQualifiedTimestamps, List<TimestampCertificateInfo> timestamps,
                      List<String> signedObjectsIds) {
         public static Signature build(AdvancedSignature signature, SimpleReport simpleReport, DiagnosticData diagnosticData) {
             var signatureId = signature.getId();
             var certificate = signature.getSigningCertificateToken().getCertificate();
 
+            var timestamps = signature.getAllTimestamps().stream().map((timestamp) -> {
+                var timestampId = timestamp.getDSSIdAsString();
+                var timestampCertificate = timestamp.getCandidatesForSigningCertificate().getTheBestCandidate().getCertificateToken().getCertificate();
+
+                return new TimestampCertificateInfo(
+                        simpleReport.getTimestampQualification(timestampId).name(),
+                        diagnosticData.getTimestampType(timestampId).name(),
+                        timestampCertificate.getSubjectX500Principal().getName(X500Principal.RFC1779),
+                        new String(Base64.getEncoder().encode(getEncodedCertificateOrNull(timestampCertificate))),
+                        format.format(timestamp.getGenerationTime())
+                );
+            }).toList();
+
             return new Signature(
-                    new QualificationResult(simpleReport.getIndication(signatureId)),
+                    simpleReport.getIndication(signatureId).name(),
                     simpleReport.getSignatureFormat(signatureId).name(),
                     format.format(signature.getSigningTime()),
                     format.format(simpleReport.getBestSignatureTime(signatureId)),
                     new CertificateInfo(
-                            new QualificationResult(simpleReport.getSignatureQualification(signatureId)),
+                            simpleReport.getSignatureQualification(signatureId).name(),
                             certificate.getIssuerX500Principal().getName(X500Principal.RFC1779),
                             certificate.getSubjectX500Principal().getName(X500Principal.RFC1779),
                             new String(Base64.getEncoder().encode(getEncodedCertificateOrNull(certificate)))
 
                     ),
                     !signature.getSignatureTimestamps().isEmpty() && signature.getSignatureTimestamps().stream().allMatch((t -> t.isValid() && simpleReport.getTimestampQualification(t.getDSSIdAsString()).equals(TimestampQualification.QTSA))),
-                    signature.getAllTimestamps().stream().map((timestamp) -> {
-                        var timestampId = timestamp.getDSSIdAsString();
-                        var timestampCertificate = timestamp.getCandidatesForSigningCertificate().getTheBestCandidate().getCertificateToken().getCertificate();
-
-                        return new TimestampCertificateInfo(
-                                new QualificationResult(simpleReport.getTimestampQualification(timestampId)),
-                                diagnosticData.getTimestampType(timestampId).name(),
-                                timestampCertificate.getSubjectX500Principal().getName(X500Principal.RFC1779),
-                                new String(Base64.getEncoder().encode(getEncodedCertificateOrNull(timestampCertificate))),
-                                format.format(timestamp.getGenerationTime())
-                        );
-                    }).toList(),
+                    timestamps.isEmpty() ? null : timestamps,
                     diagnosticData.getSignerDocuments(signatureId).stream().map(SignerDataWrapper::getId).toList()
             );
         }
     }
 
-    record QualificationResult(int code, String description) {
-        public QualificationResult(Enum qualification) {
-            this(qualification.ordinal(), qualification.name());
-        }
+    record CertificateInfo(String qualification, String issuerDN, String subjectDN, String certificateDer) {
     }
 
-    record CertificateInfo(QualificationResult qualification, String issuerDN, String subjectDN, String certificateDer) {
-    }
-
-    record TimestampCertificateInfo(QualificationResult qualification, String timestampType, String subjectDN, String certificateDer, String productionTime) {
+    record TimestampCertificateInfo(String qualification, String timestampType, String subjectDN, String certificateDer, String productionTime) {
     }
 
     record SignedObject(String id, String mimeType, String filename) {
