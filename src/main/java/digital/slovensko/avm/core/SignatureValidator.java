@@ -1,5 +1,7 @@
 package digital.slovensko.avm.core;
 
+import static digital.slovensko.avm.util.DSSUtils.*;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -9,22 +11,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import digital.slovensko.avm.util.DSSUtils;
+import digital.slovensko.avm.core.dto.ReportsAndValidator;
 import digital.slovensko.avm.util.XMLUtils;
+import eu.europa.esig.dss.enumerations.SignatureLevel;
 import eu.europa.esig.dss.simplereport.SimpleReport;
 import eu.europa.esig.dss.tsl.function.TLPredicateFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import eu.europa.esig.dss.enumerations.SignatureLevel;
 import eu.europa.esig.dss.model.DSSDocument;
 import eu.europa.esig.dss.model.DSSException;
 import eu.europa.esig.dss.service.crl.OnlineCRLSource;
@@ -42,8 +36,14 @@ import eu.europa.esig.dss.validation.CertificateVerifier;
 import eu.europa.esig.dss.validation.CommonCertificateVerifier;
 import eu.europa.esig.dss.validation.SignedDocumentValidator;
 import eu.europa.esig.dss.validation.reports.Reports;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
-import static digital.slovensko.avm.util.DSSUtils.createDocumentValidator;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 public class SignatureValidator {
     private static final String LOTL_URL = "https://ec.europa.eu/tools/lotl/eu-lotl.xml";
@@ -65,18 +65,34 @@ public class SignatureValidator {
         return instance;
     }
 
-    public synchronized Reports validate(SignedDocumentValidator docValidator) {
+    private synchronized Reports validate(SignedDocumentValidator docValidator) {
         docValidator.setCertificateVerifier(verifier);
 
         // TODO: do not print stack trace inside DSS
         return docValidator.validateDocument();
     }
 
+    public synchronized CertificateVerifier getVerifier() {
+        return verifier;
+    }
+
+    public synchronized ReportsAndValidator validate(DSSDocument document) {
+        var documentValidator = createDocumentValidator(document);
+        if (documentValidator == null)
+            return null;
+
+        try {
+            return new ReportsAndValidator(validate(documentValidator), documentValidator);
+        } catch (NullPointerException e) {
+            return null;
+        }
+    }
+
     public synchronized void refresh() {
         validationJob.offlineRefresh();
     }
 
-    public synchronized void initialize(ExecutorService executorService, List<String> tlCountries) {
+    public synchronized void initialize(ExecutorService executorService) {
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         logger.debug("Initializing signature validator at {}", formatter.format(new Date()));
 
@@ -87,10 +103,9 @@ public class SignatureValidator {
         lotlSource.setSigningCertificatesAnnouncementPredicate(new OfficialJournalSchemeInformationURI(OJ_URL));
         lotlSource.setUrl(LOTL_URL);
         lotlSource.setPivotSupport(true);
-        lotlSource.setTlPredicate(TLPredicateFactory.createEUTLCountryCodePredicate(tlCountries.toArray(new String[0])));
 
         var offlineFileLoader = new FileCacheDataLoader();
-        offlineFileLoader.setCacheExpirationTime(21600000);
+        offlineFileLoader.setCacheExpirationTime(21600000);  // 6 hours
         offlineFileLoader.setDataLoader(new CommonsDataLoader());
         validationJob.setOfflineDataLoader(offlineFileLoader);
 
