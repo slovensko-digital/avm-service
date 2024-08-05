@@ -41,8 +41,7 @@ public class AsicContainerUtils {
             throw new MultipleOriginalDocumentsFoundException("V kontajneri bolo nájdených viacero dokumentov na podpis");
 
         var originalDocument = aSiCContent.getSignedDocuments().get(0);
-        if (isXML(originalDocument.getMimeType()))
-            setMimeTypeFromManifest(asice, originalDocument);
+        setMimeTypeFromManifest(asice, originalDocument);
 
         return originalDocument;
     }
