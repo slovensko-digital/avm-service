@@ -40,8 +40,8 @@ public class AVM {
         return result.isCompliant();
     }
 
-    public void initializeSignatureValidator(ScheduledExecutorService scheduledExecutorService, ExecutorService cachedExecutorService, List<String> tlCountries) {
-        SignatureValidator.getInstance().initialize(cachedExecutorService, tlCountries);
+    public void initializeSignatureValidator(ScheduledExecutorService scheduledExecutorService, ExecutorService cachedExecutorService) {
+        SignatureValidator.getInstance().initialize(cachedExecutorService);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> SignatureValidator.getInstance().refresh(),
                 480, 480, java.util.concurrent.TimeUnit.MINUTES);

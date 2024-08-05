@@ -15,7 +15,7 @@ public class ErrorResponse {
         this(statusCode, new ErrorResponseBody(code, e.getSubheading(), e.getDescription()));
     }
 
-    private ErrorResponse(int statusCode, String code, String message, String details) {
+    public ErrorResponse(int statusCode, String code, String message, String details) {
         this(statusCode, new ErrorResponseBody(code, message, details));
     }
 
@@ -44,6 +44,7 @@ public class ErrorResponse {
             case "AutogramException" -> new ErrorResponse(502, "SIGNING_FAILED", (AutogramException) e);
             case "EmptyBodyException" -> new ErrorResponse(400, "EMPTY_BODY", (AutogramException) e);
             case "DataToSignMismatchException" -> new ErrorResponse(400, "DATATOSIGN_MISMATCH", (AutogramException) e);
+            case "DocumentNotSignedYetException" -> new ErrorResponse(422, "DOCUMENT_NOT_SIGNED", (AutogramException) e);
             default -> new ErrorResponse(500, "INTERNAL_ERROR", "Unexpected exception signing document", e.getMessage());
         };
     }

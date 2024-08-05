@@ -33,6 +33,10 @@ public class Server {
         server.createContext("/sign", new SignEndpoint(avm)).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
+        // POST Validation
+        server.createContext("/validate", new ValidationEndpoint()).getFilters()
+                .add(new AutogramCorsFilter("POST"));
+
         // POST DataToSign
         server.createContext("/datatosign", new DataToSignEndpoint(avm)).getFilters()
                 .add(new AutogramCorsFilter("POST"));

@@ -3,6 +3,7 @@ package digital.slovensko.avm.server.dto;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 
@@ -13,18 +14,13 @@ import digital.slovensko.avm.core.eforms.dto.XsltParams;
 import digital.slovensko.avm.core.errors.MalformedBodyException;
 import digital.slovensko.avm.core.errors.RequestValidationException;
 import digital.slovensko.avm.core.errors.UnsupportedSignatureLevelException;
-import eu.europa.esig.dss.enumerations.ASiCContainerType;
-import eu.europa.esig.dss.enumerations.DigestAlgorithm;
-import eu.europa.esig.dss.enumerations.MimeType;
-import eu.europa.esig.dss.enumerations.MimeTypeEnum;
-import eu.europa.esig.dss.enumerations.SignatureForm;
-import eu.europa.esig.dss.enumerations.SignatureLevel;
-import eu.europa.esig.dss.enumerations.SignaturePackaging;
+import eu.europa.esig.dss.enumerations.*;
 import eu.europa.esig.dss.model.DSSDocument;
 import eu.europa.esig.dss.model.InMemoryDocument;
 import eu.europa.esig.dss.spi.x509.tsp.TSPSource;
 
 import static digital.slovensko.avm.core.AutogramMimeType.*;
+import static eu.europa.esig.dss.enumerations.SignatureForm.*;
 
 public class ServerSigningParameters {
     public enum LocalCanonicalizationMethod {
@@ -42,8 +38,19 @@ public class ServerSigningParameters {
         XHTML
     }
 
+    public enum LocalSignatureLevel {
+        XAdES_BASELINE_T, XAdES_BASELINE_B, CAdES_BASELINE_T, CAdES_BASELINE_B, PAdES_BASELINE_B, PAdES_BASELINE_T, B, T;
+
+        public LocalSignatureLevel getTimestampingLevel() {
+            if (name().lastIndexOf('_') == -1)
+                return this;
+
+            return valueOf(name().substring(name().lastIndexOf('_')));
+        }
+    }
+
     private ASiCContainerType container;
-    private SignatureLevel level;
+    private LocalSignatureLevel level;
     private final String containerXmlns;
     private final String schema;
     private final String transformation;
@@ -66,7 +73,7 @@ public class ServerSigningParameters {
     private final String fsFormId;
 
 
-    public ServerSigningParameters(SignatureLevel level, ASiCContainerType container,
+    public ServerSigningParameters(LocalSignatureLevel level, ASiCContainerType container,
             String containerFilename, String containerXmlns, SignaturePackaging packaging,
             DigestAlgorithm digestAlgorithm,
             Boolean en319132, LocalCanonicalizationMethod infoCanonicalization,
@@ -220,7 +227,7 @@ public class ServerSigningParameters {
     }
 
     private SignatureLevel getSignatureLevel() {
-        return level;
+        return SignatureLevel.valueByName(level.name());
     }
 
     private ASiCContainerType getContainer() {
@@ -228,7 +235,7 @@ public class ServerSigningParameters {
     }
 
     public void resolveSigningLevel(InMemoryDocument document) throws RequestValidationException {
-        if (level != null)
+        if (level != null && level.name().length() > 4)
             return;
 
         var report = SignatureValidator.getSignedDocumentSimpleReport(document);
@@ -237,15 +244,21 @@ public class ServerSigningParameters {
             throw new RequestValidationException("Parameters.Level can't be empty if document is not signed yet", "");
 
         container = report.getContainerType();
-        level = switch (signedLevel.getSignatureForm()) {
-            case PAdES -> SignatureLevel.PAdES_BASELINE_B;
-            case XAdES -> SignatureLevel.XAdES_BASELINE_B;
-            case CAdES -> SignatureLevel.CAdES_BASELINE_B;
-            default -> null;
-        };
+        level = getMergedLevel(signedLevel, level);
+        if (!List.of(PAdES, XAdES, CAdES).contains(SignatureLevel.valueOf(level.name()).getSignatureForm()))
+            level = null;
 
         if (level == null)
             throw new RequestValidationException("Signed document has unsupported SignatureLevel", "");
+    }
+
+    private static LocalSignatureLevel getMergedLevel(SignatureLevel signedLevel, LocalSignatureLevel level) {
+        var timestampingLevel = "B";
+
+        if (level != null)
+            timestampingLevel = level.getTimestampingLevel().name();
+
+        return LocalSignatureLevel.valueOf(signedLevel.getSignatureForm().name() + "_BASELINE_" + timestampingLevel);
     }
 
     private String getFsFormId() {
@@ -260,17 +273,19 @@ public class ServerSigningParameters {
             throw new RequestValidationException("Parameters.Level is required", "");
 
         var supportedLevels = Arrays.asList(
-                SignatureLevel.XAdES_BASELINE_B,
-                SignatureLevel.PAdES_BASELINE_B,
-                SignatureLevel.CAdES_BASELINE_B,
-                SignatureLevel.XAdES_BASELINE_T,
-                SignatureLevel.CAdES_BASELINE_T,
-                SignatureLevel.PAdES_BASELINE_T);
+                LocalSignatureLevel.XAdES_BASELINE_B,
+                LocalSignatureLevel.PAdES_BASELINE_B,
+                LocalSignatureLevel.CAdES_BASELINE_B,
+                LocalSignatureLevel.XAdES_BASELINE_T,
+                LocalSignatureLevel.CAdES_BASELINE_T,
+                LocalSignatureLevel.PAdES_BASELINE_T,
+                LocalSignatureLevel.B,
+                LocalSignatureLevel.T);
 
         if (!supportedLevels.contains(level))
             throw new UnsupportedSignatureLevelException(level.name());
 
-        if (level.getSignatureForm() == SignatureForm.PAdES) {
+        if (getSignatureLevel().getSignatureForm() == PAdES) {
             if (!isPDF(mimeType))
                 throw new RequestValidationException("PayloadMimeType and Parameters.Level mismatch",
                         "Parameters.Level: PAdES is not supported for this payload: " + mimeType.getMimeTypeString());
@@ -280,7 +295,7 @@ public class ServerSigningParameters {
                         "PAdES signature cannot be in a container");
         }
 
-        if (level.getSignatureForm() == SignatureForm.XAdES) {
+        if (getSignatureLevel().getSignatureForm() == XAdES) {
             if (!isXML(mimeType) && !isXDC(mimeType) && !isAsice(mimeType) && container == null)
                 if (!(packaging != null && packaging == SignaturePackaging.ENVELOPING))
                     throw new RequestValidationException(

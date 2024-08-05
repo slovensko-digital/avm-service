@@ -1,5 +1,9 @@
 package digital.slovensko.avm.server.dto;
 
+import eu.europa.esig.dss.model.InMemoryDocument;
+
+import java.util.Base64;
+
 public class Document {
     private String filename;
     private String content;
@@ -19,5 +23,9 @@ public class Document {
 
     public String getContent() {
         return content;
+    }
+
+    public InMemoryDocument getDecodedContent() {
+        return new InMemoryDocument(Base64.getDecoder().decode(content));
     }
 }
