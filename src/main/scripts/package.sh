@@ -19,22 +19,20 @@ function checkExitCode() {
 
 jvmOptions="-Dfile.encoding=UTF-8 \
     -Dprism.maxvram=2G \
-    --add-exports javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED \
-    --add-exports jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED \
     --add-opens java.base/java.security=ALL-UNNAMED \
     --add-opens jdk.crypto.cryptoki/sun.security.pkcs11=ALL-UNNAMED"
 
 arguments=(
     "--input" "${appDirectory}"
     "--runtime-image" "${jdkDirectory}"
-    "--main-jar" "avm.jar"
+    "--main-jar" "autogram-service.jar"
     "--app-version" "1.0.0"
     "--resource-dir" "./"
     "--dest" "${output}"
 )
 
 if [[ "$platform" == "linux" ]]; then
-    lowercase_name="avm"
+    lowercase_name="autogram-service"
 
     arguments+=(
         "--name" "${lowercase_name}"
