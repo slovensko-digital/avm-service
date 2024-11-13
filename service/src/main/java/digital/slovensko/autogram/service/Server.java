@@ -1,8 +1,8 @@
 package digital.slovensko.autogram.service;
 
 import com.sun.net.httpserver.HttpServer;
-import digital.slovensko.autogram.server.endpoints.*;
-import digital.slovensko.autogram.server.filters.AutogramCorsFilter;
+import digital.slovensko.autogram.core.server.endpoints.*;
+import digital.slovensko.autogram.core.server.filters.AutogramCorsFilter;
 import digital.slovensko.autogram.service.endpoints.DataToSignEndpoint;
 import digital.slovensko.autogram.service.endpoints.BuildSignatureEndpoint;
 import digital.slovensko.autogram.service.endpoints.VisualizationEndpoint;

@@ -1,12 +1,13 @@
 package digital.slovensko.autogram.service;
 
 import digital.slovensko.autogram.core.Settings;
-import digital.slovensko.autogram.core.util.Logging;
 import eu.europa.esig.dss.service.http.commons.TimestampDataLoader;
 import eu.europa.esig.dss.service.tsp.OnlineTSPSource;
 import eu.europa.esig.dss.spi.x509.tsp.CompositeTSPSource;
 import eu.europa.esig.dss.spi.x509.tsp.TSPSource;
 import org.apache.commons.cli.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
@@ -14,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class App {
+    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
     private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
     private static final ExecutorService cachedExecutorService = Executors.newFixedThreadPool(8);
 
@@ -55,8 +57,7 @@ public class App {
             run(port, settings);
 
         } catch (ParseException e) {
-            Logging.log("Unable to parse program args");
-            Logging.log(e);
+            LOGGER.error("Unable to parse program args", e);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -77,6 +78,8 @@ public class App {
         ).start();
 
         var server = new Server(autogramService, "0.0.0.0", port, cachedExecutorService);
+
+        LOGGER.info("Starting server on port {}", port);
         server.start();
     }
 }

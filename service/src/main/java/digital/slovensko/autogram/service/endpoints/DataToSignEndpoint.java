@@ -3,9 +3,9 @@ package digital.slovensko.autogram.service.endpoints;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import digital.slovensko.autogram.core.SignatureComposer;
-import digital.slovensko.autogram.server.EndpointUtils;
+import digital.slovensko.autogram.core.server.EndpointUtils;
 import digital.slovensko.autogram.service.dto.DataToSignRequestBody;
-import digital.slovensko.autogram.server.dto.ErrorResponse;
+import digital.slovensko.autogram.core.server.dto.ErrorResponse;
 
 public class DataToSignEndpoint implements HttpHandler {
     private final SignatureComposer signatureComposer;
