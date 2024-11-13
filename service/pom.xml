@@ -193,9 +193,6 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.5</version>
                     <configuration>
-                        <jvm>${jlink.jdk.path}${file.separator}bin${file.separator}java</jvm>
-                        <!-- done this way because you can't override excludedGroups in a profile
-                        https://issues.apache.org/jira/browse/SUREFIRE-1645 -->
                         <excludedGroups>${testExcludedGroups}</excludedGroups>
                     </configuration>
                 </plugin>
@@ -209,7 +206,6 @@
 
                 <configuration>
                     <fork>true</fork>
-                    <executable>${jlink.jdk.path}${file.separator}bin${file.separator}javac</executable>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <compilerArgs>
@@ -272,24 +268,6 @@
                 <version>1.2.0</version>
                 <executions>
                     <execution>
-                        <id>cache-jdk-17</id>
-                        <goals>
-                            <goal>cache-jdk</goal>
-                        </goals>
-                        <configuration>
-                            <jdkPathProperty>jlink.jdk.path</jdkPathProperty>
-                            <jdkCachePath>${project.build.directory}${file.separator}jdkCache</jdkCachePath>
-                            <authorization>${github.auth}</authorization>
-                            <provider>BELLSOFT</provider>
-                            <providerConfig>
-                                <type>jdk</type>
-                                <version>17.0.10+13</version>
-                                <arch>amd64-full</arch>
-                            </providerConfig>
-                        </configuration>
-                    </execution>
-
-                    <execution>
                         <id>call-jdeps</id>
                         <goals>
                             <goal>jdeps</goal>
@@ -320,9 +298,6 @@
                         </goals>
                         <configuration>
                             <output>${project.build.directory}${file.separator}preparedJDK</output>
-                            <modulePaths>
-                                <path>${jlink.jdk.path}${file.separator}jmods</path>
-                            </modulePaths>
                             <addModules>
                                 <module>java.compiler</module>
                                 <module>java.base</module>
