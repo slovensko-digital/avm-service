@@ -33,7 +33,11 @@ public class App {
                 return;
             }
 
-            var port = Integer.parseInt(cmd.getOptionValue("port", "7200"));
+            var portStr = cmd.getOptionValue("port", System.getenv("PORT"));
+            if (portStr == null)
+                portStr = "7200";
+            var port = Integer.parseInt(portStr);
+
             var tsaServers = cmd.getOptionValue("tsa-server", System.getenv("TSA_SERVER"));
             if (tsaServers == null)
                 tsaServers = "http://tsa.belgium.be/connect,http://ts.quovadisglobal.com/eu,http://tsa.sep.bg";

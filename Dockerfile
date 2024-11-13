@@ -10,7 +10,7 @@ COPY service/pom.xml service/pom.xml
 COPY core/src core/src
 COPY service/src service/src
 
-RUN mvn package
+RUN mvn package -P system-jdk
 
 
 FROM eclipse-temurin:17.0.12_7-jre-noble as prod

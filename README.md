@@ -16,16 +16,26 @@ Projekt sa skladá z viacerých častí:
 
 ## Ako si to rozbehnúť
 
-Ide o Java projekt. Nepoužívajte `maven`, namiesto toho je v repozitári skript `mvnw`. Po naklonovaní projektu je potrebné zavolať:
-```
-./mvnw initialize
-```
-Potrebná verzia Javy sa potom nachádza niekde v adresári `target`. Odporúčame projekt spúšťať cez IntelliJ.
+Projekt vyžaduje `JDK 17`. Ak máte nainštalovanú `JDK 17`, stačí si nastaviť premennú `JAVA_HOME` na cestu k Jave a používať `mvn` commandy s prepínačom `-P system-jdk`.
+
+Predvolene sa stiahne `LIBERICA 17` niekam do `target` adresára. Napríklad pomocou `mvn initialize` príkazu.
+
+Odporúčame projekt spúšťať cez IntelliJ (stačí IDEA).
 
 ### Docker
 
 ```
 docker build -t autogram-service .
-docker run -p8720:8720 autogram-service
+docker run -p7200:7200 autogram-service
 ```
 
+### ENV
+
+Poznáme tieto ENVs a toto sú ich predvolené hodnoty, ak ich nenastavíte:
+
+```
+PORT=7200
+TSA_SERVER=http://tsa.belgium.be/connect,http://ts.quovadisglobal.com/eu,http://tsa.sep.bg
+```
+
+Rovnako je možné použiť argv `-p/--port` a `--tsa-server`.
