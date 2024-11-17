@@ -6,6 +6,7 @@ variables:
   AUTO_DEVOPS_BUILD_CACHE: registry
   AUTO_DEPLOY_IMAGE_VERSION: 'v2.47.0'
   GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_FORCE_HTTPS: "true"
 
 stages:  
   - build
