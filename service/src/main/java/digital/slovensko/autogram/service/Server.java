@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
 public class Server {
@@ -25,7 +26,7 @@ public class Server {
 
     public void start() throws IOException {
         // GET Info
-        server.createContext("/info", new InfoEndpoint("0.0.0")).getFilters()
+        server.createContext("/info", new InfoEndpoint("1.0.0")).getFilters()
                 .add(new AutogramCorsFilter("GET"));
 
         // GET Documentation
