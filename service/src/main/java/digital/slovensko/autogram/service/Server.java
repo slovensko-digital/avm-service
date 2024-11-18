@@ -5,6 +5,7 @@ import digital.slovensko.autogram.core.server.endpoints.*;
 import digital.slovensko.autogram.core.server.filters.AutogramCorsFilter;
 import digital.slovensko.autogram.service.endpoints.DataToSignEndpoint;
 import digital.slovensko.autogram.service.endpoints.BuildSignatureEndpoint;
+import digital.slovensko.autogram.service.endpoints.DeprecatedSignEndpoint;
 import digital.slovensko.autogram.service.endpoints.VisualizationEndpoint;
 
 import java.io.IOException;
@@ -44,6 +45,11 @@ public class Server {
 
         // POST build-signature
         server.createContext("/build-signature", new BuildSignatureEndpoint(autogramService)).getFilters()
+                .add(new AutogramCorsFilter("POST"));
+
+        // TODO: deprecate
+        // POST sign
+        server.createContext("/sign", new DeprecatedSignEndpoint(autogramService)).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
         // POST DataToSign
