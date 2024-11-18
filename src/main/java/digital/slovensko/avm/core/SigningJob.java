@@ -63,6 +63,9 @@ public class SigningJob {
         if (!new String(Base64.getEncoder().encode(dataToSign.getBytes())).equals(dataToSignStructure.dataToSign()))
             throw new DataToSignMismatchException();
 
+        if (!service.isValidSignatureValue(dataToSign, signatureValue, token))
+            throw new CryptographicSignatureVerificationException();
+
         DSSDocument doc;
         try {
             doc = service.signDocument(document, signatureParameters, signatureValue);
