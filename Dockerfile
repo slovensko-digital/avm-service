@@ -1,20 +1,15 @@
-FROM maven:3.9.9-eclipse-temurin-17-focal as build
+FROM bellsoft/liberica-runtime-container:jdk-17.0.10-glibc as build
 
-WORKDIR /app
+RUN apk add bash
 
+COPY mvnw mvnw
 COPY .mvn .mvn
+
 COPY pom.xml pom.xml
-COPY core/pom.xml core/pom.xml
-COPY service/pom.xml service/pom.xml
+RUN ./mvnw initialize
 
-COPY core/src core/src
-COPY service/src service/src
+COPY src src
+RUN apk add --no-cache binutils
+RUN ./mvnw package
 
-RUN mvn package -P system-jdk
-
-
-FROM eclipse-temurin:17.0.12_7-jre-noble as prod
-WORKDIR /app
-COPY --from=build /app/service/target/service-1.0.0-jar-with-dependencies.jar ./
-
-CMD ["java", "-jar", "--add-exports", "java.base/sun.security.x509=ALL-UNNAMED", "service-1.0.0-jar-with-dependencies.jar"]
+CMD ["java", "-jar", "--add-exports", "java.base/sun.security.x509=ALL-UNNAMED", "target/avm-1.0.0.jar"]
