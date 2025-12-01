@@ -1,4 +1,4 @@
-FROM maven:3.9.11-eclipse-temurin-21-noble as build
+FROM maven:3.9.11-eclipse-temurin-21-noble AS build
 
 WORKDIR /app
 
@@ -13,8 +13,8 @@ COPY service/src service/src
 RUN mvn package
 
 
-FROM eclipse-temurin:21.0.9_10-jre-noble as prod
+FROM eclipse-temurin:21.0.9_10-jre-noble AS prod
 WORKDIR /app
-COPY --from=build /app/service/target/service-1.0.0-jar-with-dependencies.jar ./
+COPY --from=build /app/service/target/service-1.1.0-jar-with-dependencies.jar ./
 
-CMD ["java", "-jar", "service-1.0.0-jar-with-dependencies.jar"]
+CMD ["java", "-jar", "service-1.1.0-jar-with-dependencies.jar"]
