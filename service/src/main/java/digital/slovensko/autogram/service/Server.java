@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
 public class Server {
