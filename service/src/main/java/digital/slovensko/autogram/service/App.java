@@ -40,7 +40,7 @@ public class App {
 
             var tsaServers = cmd.getOptionValue("tsa-server", System.getenv("TSA_SERVER"));
             if (tsaServers == null)
-                tsaServers = "http://tsa.belgium.be/connect,http://ts.quovadisglobal.com/eu,http://tsa.sep.bg";
+                tsaServers = "http://ts.quovadisglobal.com/eu,http://tsa.baltstamp.lt,http://tsa.belgium.be/connect";
 
             var timestampDataLoader = new TimestampDataLoader();
             var tspSources = new HashMap<String, TSPSource>();
