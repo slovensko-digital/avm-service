@@ -16,9 +16,9 @@ Projekt sa skladá z viacerých častí:
 
 ## Ako si to rozbehnúť
 
-Projekt vyžaduje `JDK 17`. Ak máte nainštalovanú `JDK 17`, stačí si nastaviť premennú `JAVA_HOME` na cestu k Jave a používať `mvn` commandy s prepínačom `-P system-jdk`.
+Projekt vyžaduje `JDK 21`. Ak máte nainštalovanú `JDK 21`, stačí si nastaviť premennú `JAVA_HOME` na cestu k Jave a používať `mvn` commandy s prepínačom `-P system-jdk`.
 
-Predvolene sa stiahne `LIBERICA 17` niekam do `target` adresára. Napríklad pomocou `mvn initialize` príkazu.
+Predvolene sa stiahne `LIBERICA 21` niekam do `target` adresára. Napríklad pomocou `mvn initialize` príkazu.
 
 Odporúčame projekt spúšťať cez IntelliJ (stačí IDEA).
 

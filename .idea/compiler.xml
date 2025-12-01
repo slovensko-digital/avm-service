@@ -11,10 +11,4 @@
       </profile>
     </annotationProcessing>
   </component>
-  <component name="JavacSettings">
-    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="core" options="--add-exports java.base/sun.security.x509=ALL-UNNAMED" />
-      <module name="service" options="--add-exports java.base/sun.security.x509=ALL-UNNAMED" />
-    </option>
-  </component>
 </project>

@@ -6,10 +6,20 @@
             "name": "Run Main class",
             "request": "launch",
             "mainClass": "digital.slovensko.autogram.service.Main",
-            "projectName": "autogram-service",
             "preLaunchTask": "java (build): Build Workspace",
-            "vmArgs": "--add-exports jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED --add-modules jdk.crypto.cryptoki --add-exports java.base/sun.security.x509=ALL-UNNAMED",
             "args": "-p 7200",
+            "osx": {
+                "console": "integratedTerminal"
+            }
+        },
+        {
+            "type": "java",
+            "name": "Debug Main class",
+            "request": "launch",
+            "mainClass": "digital.slovensko.autogram.service.Main",
+            "preLaunchTask": "java (build): Build Workspace",
+            "args": "-p 7200",
+            "vmArgs": "--enable-preview",
             "osx": {
                 "console": "integratedTerminal"
             }
