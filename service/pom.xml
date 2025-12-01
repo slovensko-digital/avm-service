@@ -28,7 +28,7 @@
         <snakeyml.version>2.2</snakeyml.version>
         <jimfs.version>1.3.0</jimfs.version>
         <testExcludedGroups>HttpSmokeTest</testExcludedGroups>
-        <skip-jdk-cache>false</skip-jdk-cache>
+        <jlink.jdk.path>${env.JAVA_HOME}</jlink.jdk.path>
     </properties>
 
     <dependencyManagement>
@@ -121,7 +121,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -151,14 +150,12 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -171,7 +168,6 @@
         <dependency>
             <groupId>eu.europa.ec.joinup.sd-dss</groupId>
             <artifactId>dss-jades</artifactId>
-            <version>5.12.1</version>
         </dependency>
         <dependency>
             <groupId>digital.slovensko.autogram</groupId>
@@ -266,25 +262,6 @@
                 <version>1.2.0</version>
                 <executions>
                     <execution>
-                        <id>cache-jdk-17</id>
-                        <goals>
-                            <goal>cache-jdk</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skip-jdk-cache}</skip>
-                            <jdkPathProperty>jlink.jdk.path</jdkPathProperty>
-                            <jdkCachePath>${project.build.directory}${file.separator}jdkCache</jdkCachePath>
-                            <authorization>${github.auth}</authorization>
-                            <provider>BELLSOFT</provider>
-                            <providerConfig>
-                                <type>jdk</type>
-                                <version>17.0.7+7</version>
-                                <arch>amd64-full</arch>
-                            </providerConfig>
-                        </configuration>
-                    </execution>
-
-                    <execution>
                         <id>call-jlink</id>
                         <goals>
                             <goal>jlink</goal>
@@ -324,14 +301,6 @@
                     <descriptors>
                         <descriptor>src/main/scripts/bin.xml</descriptor>
                     </descriptors>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                      <manifest>
-                        <mainClass>${main.class}</mainClass>
-                      </manifest>
-                    </archive>
                 </configuration>
                 <executions>
                     <execution>
@@ -343,18 +312,44 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${main.class}</mainClass>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <profiles>
-        <profile>
-            <id>system-jdk</id>
-            <properties>
-                <jlink.jdk.path>${env.JAVA_HOME}</jlink.jdk.path>
-                <skip-jdk-cache>true</skip-jdk-cache>
-            </properties>
-        </profile>
-
         <profile>
             <id>windows</id>
             <activation>
