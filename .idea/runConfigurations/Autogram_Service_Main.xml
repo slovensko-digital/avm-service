@@ -2,7 +2,6 @@
   <configuration default="false" name="Autogram Service Main" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="digital.slovensko.autogram.service.Main" />
     <module name="service" />
-    <option name="VM_PARAMETERS" value="--add-exports jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-modules jdk.crypto.cryptoki" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

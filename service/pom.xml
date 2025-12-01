@@ -14,14 +14,14 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.class>digital.slovensko.autogram.service.Main</main.class>
-        <java.version>17</java.version>
-        <dss.version>6.0</dss.version>
-        <gson.version>2.10.1</gson.version>
+        <java.version>21</java.version>
+        <dss.version>6.2</dss.version>
+        <gson.version>2.11.0</gson.version>
         <apache.httpcomponents.version>4.5.14</apache.httpcomponents.version>
         <saxon.version>12.4</saxon.version>
         <xerces.version>2.12.1</xerces.version>
-        <slf4j.version>2.0.11</slf4j.version>
-        <junit.version>5.10.1</junit.version>
+        <slf4j.version>2.0.13</slf4j.version>
+        <junit.version>5.10.2</junit.version>
         <mockito.version>5.10.0</mockito.version>
         <commons-cli.version>1.6.0</commons-cli.version>
         <xmlunit.version>2.9.1</xmlunit.version>
@@ -202,14 +202,6 @@
                     <executable>${jlink.jdk.path}${file.separator}bin${file.separator}javac</executable>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
-                    <compilerArgs>
-                        <arg>--add-exports</arg>
-                        <arg>jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED</arg>
-                        <arg>--add-exports</arg>
-                        <arg>java.base/sun.security.x509=ALL-UNNAMED</arg>
-                        <arg>--add-modules</arg>
-                        <arg>jdk.crypto.cryptoki</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
 
