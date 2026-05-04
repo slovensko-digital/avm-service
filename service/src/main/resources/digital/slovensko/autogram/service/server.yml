@@ -8,7 +8,7 @@ info:
   license:
     name: EUPLv1.2
     url: https://eupl.eu/1.2/en/
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: http://localhost:7200
   - url: /
@@ -139,6 +139,54 @@ paths:
                     example: The provided document is not eligible for signature validation because the document is not signed yet.
                     description: Optional details.
         400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - MALFORMED_INPUT
+                    description: Code that can be used to identify the error.
+                  message:
+                    type: string
+                    example: JsonSyntaxException parsing request body.
+                    description: Human readable error message.
+                  details:
+                    type: string
+                    example: Document to validate is null.
+                    description: Optional details.
+
+  /parse:
+    post:
+      tags:
+        - Signature
+      summary: Parse document or asice documents
+      operationId: parseDocument
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Document"
+            examples:
+              Signed PDF with timestamp:
+                $ref: "#/components/examples/Signed-PDF-TS"
+              Signed XAdES PDF with timestamp and LTA level qualified:
+                $ref: "#/components/examples/Signed-XAdES-PDF-2TS"
+              Signed EForm:
+                $ref: "#/components/examples/Signed-EForm"
+              Not signed TXT:
+                $ref: "#/components/examples/Not-signed-TXT"
+      responses:
+        200:
+          description: Signature validation report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParseResponseBody"
+        422:
           description: Bad request
           content:
             application/json:
@@ -476,6 +524,27 @@ components:
         issuedBy:
           type: string
           example: CN=SVK eID ACA2, O=Disig a.s., OID.2.5.4.97=NTRSK-12345678, L=Bratislava, C=SK
+
+    ParseResponseBody:
+      type: object
+      properties:
+        filename:
+          type: string
+          example: SignedDocument.pdf
+        contentType:
+          type: string
+          example: application/pdf
+        sbudocuments:
+          type: array
+          items:
+            type: object
+            properties:
+              filename:
+                type: string
+                example: SignedDocument.pdf
+              contentType:
+                type: string
+                example: application/pdf
 
     ValidationResponseBody:
       type: object
