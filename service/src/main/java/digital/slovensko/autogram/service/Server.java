@@ -7,6 +7,7 @@ import digital.slovensko.autogram.service.endpoints.DataToSignEndpoint;
 import digital.slovensko.autogram.service.endpoints.BuildSignatureEndpoint;
 import digital.slovensko.autogram.service.endpoints.DeprecatedSignEndpoint;
 import digital.slovensko.autogram.service.endpoints.VisualizationEndpoint;
+import digital.slovensko.autogram.service.endpoints.ParseEndpoint;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -66,6 +67,10 @@ public class Server {
 
         // POST Validation
         server.createContext("/validate", new ValidationEndpoint()).getFilters()
+                .add(new AutogramCorsFilter("POST"));
+
+        // POST Parse
+        server.createContext("/parse", new ParseEndpoint()).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
 

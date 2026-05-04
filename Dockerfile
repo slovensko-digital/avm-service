@@ -15,6 +15,6 @@ RUN mvn package
 
 FROM eclipse-temurin:21.0.9_10-jre-noble AS prod
 WORKDIR /app
-COPY --from=build /app/service/target/service-1.1.0-jar-with-dependencies.jar ./
+COPY --from=build /app/service/target/service-1.2.0-jar-with-dependencies.jar ./
 
-CMD ["java", "-jar", "service-1.1.0-jar-with-dependencies.jar"]
+CMD ["java", "-jar", "service-1.2.0-jar-with-dependencies.jar"]
