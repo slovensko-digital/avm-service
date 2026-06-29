@@ -69,6 +69,10 @@ public class Server {
         server.createContext("/validate", new ValidationEndpoint()).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
+        // POST Validate signed version
+        server.createContext("/validate-signed-version", new SignedVersionValidationEndpoint()).getFilters()
+                .add(new AutogramCorsFilter("POST"));
+
         // POST Parse
         server.createContext("/parse", new ParseEndpoint()).getFilters()
                 .add(new AutogramCorsFilter("POST"));

@@ -159,6 +159,77 @@ paths:
                     example: Document to validate is null.
                     description: Optional details.
 
+  /validate-signed-version:
+    post:
+      tags:
+        - Signature
+      summary: Verify that a signed file is a signed version of the original file(s).
+      description: |
+        Compares one or more original files (A) against a signed file (B) and checks whether B is a
+        signed version of A. The original file(s) may be not-yet-signed input (one file, or multiple
+        files signed together into a single ASiC-E) or an already signed file. The signed file B is
+        always a signed file - ASiC with CAdES/XAdES, or PAdES.
+
+        The endpoint detects tampering by checking that every payload document of A is present
+        unchanged inside B. XML payloads are compared by their canonicalized form; signed XML is
+        usually wrapped in an XML Data Container (XDC), so the plain XML payload is extracted from the
+        XDC before comparison. When A is already signed, the endpoint also checks that B preserves all
+        signatures present on A. B may carry one or more additional, new signatures.
+      operationId: validateSignedVersion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompareRequestBody"
+      responses:
+        200:
+          description: Comparison result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompareResponseBody"
+        422:
+          description: Signed document could not be validated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - DOCUMENT_NOT_SIGNED
+                    description: Code that can be used to identify the error.
+                  message:
+                    type: string
+                    example: Document is not signed yet.
+                    description: Human readable error message.
+                  details:
+                    type: string
+                    example: The provided signed document is not signed yet.
+                    description: Optional details.
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - MALFORMED_INPUT
+                      - EMPTY_BODY
+                    description: Code that can be used to identify the error.
+                  message:
+                    type: string
+                    example: Failed to parse JSON body.
+                    description: Human readable error message.
+                  details:
+                    type: string
+                    example: Missing original documents.
+                    description: Optional details.
+
   /parse:
     post:
       tags:
@@ -296,11 +367,11 @@ components:
       properties:
         filename:
           type: string
-          example: "document.xml"
+          example: "document.txt"
           description: Filename of the original file to be signed. Is used to name the file inside ASiC container. If not provided with ASiC container, the file is named `detached-file` inside the container.
         content:
           type: string
-          example: '<?xml version="1.0"?><Document><Title>Lorem Ipsum</Title></Document>'
+          example: 'c2FtcGxlIGNvbnRlbnQ='
           description: "Content of the document to sign, format is dictated by `payloadMimeType`."
       required:
         - content
@@ -545,6 +616,95 @@ components:
               contentType:
                 type: string
                 example: application/pdf
+
+    CompareRequestBody:
+      type: object
+      properties:
+        originalDocuments:
+          type: array
+          description: |
+            The original file(s) A. May be one or more not-yet-signed files (multiple files are
+            treated as documents that were signed together into a single container) or an already
+            signed file.
+          items:
+            $ref: "#/components/schemas/Document"
+        signedDocument:
+          $ref: "#/components/schemas/Document"
+          description: The signed file B that should be a signed version of the original file(s).
+      required:
+        - originalDocuments
+        - signedDocument
+
+    CompareResponseBody:
+      type: object
+      properties:
+        contentMatches:
+          type: boolean
+          description: True when every payload document of A was found unchanged inside B.
+          example: true
+        allSignaturesPreserved:
+          type: boolean
+          description: True when B contains all signatures that were present on A.
+          example: true
+        matchedDocuments:
+          type: array
+          description: Pairs of original/signed documents that were matched by content.
+          items:
+            type: object
+            properties:
+              originalFilename:
+                type: string
+                example: document.xml
+              signedFilename:
+                type: string
+                example: document.xml
+        unmatchedOriginals:
+          type: array
+          description: Original payload documents that were not found inside B (possible tampering).
+          items:
+            $ref: "#/components/schemas/ComparedDocument"
+        extraSignedDocuments:
+          type: array
+          description: Payload documents present in B that did not match any original.
+          items:
+            $ref: "#/components/schemas/ComparedDocument"
+        preservedSignatures:
+          type: array
+          description: Signatures of A that are also present on B.
+          items:
+            $ref: "#/components/schemas/ComparedSignature"
+        missingSignatures:
+          type: array
+          description: Signatures of A that are missing from B.
+          items:
+            $ref: "#/components/schemas/ComparedSignature"
+        newSignatures:
+          type: array
+          description: Signatures present on B that were not on A.
+          items:
+            $ref: "#/components/schemas/ComparedSignature"
+
+    ComparedDocument:
+      type: object
+      properties:
+        filename:
+          type: string
+          example: document.xml
+        mimeType:
+          type: string
+          example: application/xml
+
+    ComparedSignature:
+      type: object
+      properties:
+        signedBy:
+          type: string
+          description: Subject distinguished name of the signing certificate.
+          example: "CN=John Doe, O=Company, C=SK"
+        signingTime:
+          type: string
+          description: Claimed signing time.
+          example: "2023-08-01T12:37:47 +0200"
 
     ValidationResponseBody:
       type: object
