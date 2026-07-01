@@ -17,6 +17,7 @@ tags:
     description: Information and status of the server
   - name: Signature
   - name: Visualization
+  - name: PDF
 paths:
   /visualization:
     post:
@@ -53,6 +54,82 @@ paths:
                   details:
                     type: string
                     example: PayloadMimeType must be PDF when using PAdES.
+                    description: Optional details.
+
+  /stamp-pdf:
+    post:
+      tags:
+        - PDF
+      summary: Add a visual stamp to a PDF document.
+      description: Adds a non-cryptographic visual stamp to the provided PDF and returns the stamped PDF.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StampPdfRequestBody"
+      responses:
+        200:
+          description: Stamped PDF document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+        400:
+          description: Stamping failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: UNPROCESSABLE_INPUT
+                    description: Code that can be used to identify the error.
+                  message:
+                    type: string
+                    example: IllegalArgumentException parsing request body
+                    description: Human readable error message.
+                  details:
+                    type: string
+                    example: Document.MimeType must be application/pdf.
+                    description: Optional details.
+
+  /prepare-signature-fields:
+    post:
+      tags:
+        - PDF
+      summary: Add empty visible signature fields to a PDF document.
+      description: Creates one or more visible unsigned PDF signature fields and returns the modified PDF.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrepareSignatureFieldsRequestBody"
+      responses:
+        200:
+          description: PDF document with prepared visible signature fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+        400:
+          description: Field preparation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: UNPROCESSABLE_INPUT
+                    description: Code that can be used to identify the error.
+                  message:
+                    type: string
+                    example: IllegalArgumentException parsing request body
+                    description: Human readable error message.
+                  details:
+                    type: string
+                    example: Visible signature fields can only be prepared before the first signature is added.
                     description: Optional details.
 
   /datatosign:
@@ -350,6 +427,117 @@ components:
         - document
         - payloadMimeType
 
+    StampPdfRequestBody:
+      type: object
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        stamp:
+          $ref: "#/components/schemas/StampParameters"
+      required:
+        - document
+        - stamp
+
+    PrepareSignatureFieldsRequestBody:
+      type: object
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        fields:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SignatureFieldParameters"
+      required:
+        - document
+        - fields
+
+    SignatureFieldParameters:
+      type: object
+      properties:
+        fieldName:
+          type: string
+          example: signature-field-1f54d9b8
+          description: Unique PDF form field identifier.
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+          description: One-based PDF page number.
+        x:
+          type: number
+          format: float
+          example: 40
+          description: X position of the visible field rectangle in PDF user-space units.
+        y:
+          type: number
+          format: float
+          example: 40
+          description: Y position of the visible field rectangle in PDF user-space units.
+        width:
+          type: number
+          format: float
+          example: 180
+        height:
+          type: number
+          format: float
+          example: 64
+      required:
+        - fieldName
+        - page
+        - x
+        - y
+        - width
+        - height
+
+    StampParameters:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+          description: One-based PDF page number.
+        x:
+          type: number
+          format: float
+          example: 40
+          description: X position of the stamp rectangle in PDF user-space units.
+        y:
+          type: number
+          format: float
+          example: 40
+          description: Y position of the stamp rectangle in PDF user-space units.
+        width:
+          type: number
+          format: float
+          example: 260
+        height:
+          type: number
+          format: float
+          example: 52
+        text:
+          type: string
+          maxLength: 500
+          example: This document is signed electronically. Validate signatures in a PDF viewer or trusted validator.
+          description: Text rendered inside the stamp. Required when imageContent is not provided.
+        imageContent:
+          type: string
+          example: iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ
+          description: Optional PNG or JPEG image content encoded as base64. Required when text is not provided.
+        imageMimeType:
+          type: string
+          enum:
+            - image/png
+            - image/jpeg
+          description: Required when imageContent is provided.
+      required:
+        - page
+        - x
+        - y
+        - width
+        - height
+
     ExtensionRequestBody:
       type: object
       properties:
@@ -373,6 +561,10 @@ components:
           type: string
           example: 'c2FtcGxlIGNvbnRlbnQ='
           description: "Content of the document to sign, format is dictated by `payloadMimeType`."
+        mimeType:
+          type: string
+          example: application/pdf;base64
+          description: MIME type of the document content. Required by endpoints that do not use a separate payloadMimeType field.
       required:
         - content
 

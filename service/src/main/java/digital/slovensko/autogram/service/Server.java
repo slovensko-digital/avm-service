@@ -8,6 +8,8 @@ import digital.slovensko.autogram.service.endpoints.BuildSignatureEndpoint;
 import digital.slovensko.autogram.service.endpoints.DeprecatedSignEndpoint;
 import digital.slovensko.autogram.service.endpoints.VisualizationEndpoint;
 import digital.slovensko.autogram.service.endpoints.ParseEndpoint;
+import digital.slovensko.autogram.service.endpoints.PrepareSignatureFieldsEndpoint;
+import digital.slovensko.autogram.service.endpoints.StampPdfEndpoint;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -58,6 +60,14 @@ public class Server {
 
         // POST Visualization
         server.createContext("/visualization", new VisualizationEndpoint(autogramService)).getFilters()
+                .add(new AutogramCorsFilter("POST"));
+
+        // POST Stamp PDF
+        server.createContext("/stamp-pdf", new StampPdfEndpoint(new PdfStamper())).getFilters()
+                .add(new AutogramCorsFilter("POST"));
+
+        // POST Prepare signature fields
+        server.createContext("/prepare-signature-fields", new PrepareSignatureFieldsEndpoint(new PdfSignatureFieldPreparer())).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
         // POST Extend
