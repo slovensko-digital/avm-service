@@ -1,4 +1,8 @@
-FROM maven:3.9.11-eclipse-temurin-21-noble AS build
+FROM eclipse-temurin:25.0.3_9-jdk-noble AS build
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends maven \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -12,9 +16,9 @@ COPY service/src service/src
 
 RUN mvn package
 
+FROM eclipse-temurin:25.0.3_9-jre-noble AS prod
 
-FROM eclipse-temurin:21.0.9_10-jre-noble AS prod
 WORKDIR /app
-COPY --from=build /app/service/target/service-1.2.0-jar-with-dependencies.jar ./
+COPY --from=build /app/service/target/service-1.2.1-jar-with-dependencies.jar ./
 
-CMD ["java", "-jar", "service-1.2.0-jar-with-dependencies.jar"]
+CMD ["java", "-jar", "service-1.2.1-jar-with-dependencies.jar"]

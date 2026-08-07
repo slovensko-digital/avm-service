@@ -35,7 +35,7 @@ Poznáme tieto ENVs a toto sú ich predvolené hodnoty, ak ich nenastavíte:
 
 ```
 PORT=7200
-TSA_SERVER=http://tsa.belgium.be/connect,http://ts.quovadisglobal.com/eu,http://tsa.sep.bg
+TSA_SERVER=http://timestamp.sectigo.com/qualified,http://tsa.belgium.be/connect
 ```
 
 Rovnako je možné použiť argv `-p/--port` a `--tsa-server`.
