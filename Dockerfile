@@ -14,7 +14,6 @@ COPY service/pom.xml service/pom.xml
 COPY core/src core/src
 COPY service/src service/src
 
-RUN test -d "$JAVA_HOME/jmods"
 RUN mvn package
 
 FROM eclipse-temurin:25.0.3_9-jre-noble AS prod
