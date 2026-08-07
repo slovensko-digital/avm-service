@@ -6,7 +6,7 @@
 
     <groupId>digital.slovensko.autogram</groupId>
     <artifactId>service</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <packaging>jar</packaging>
 
     <name>Autogram Service</name>
@@ -14,14 +14,14 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.class>digital.slovensko.autogram.service.Main</main.class>
-        <java.version>21</java.version>
-        <dss.version>6.2</dss.version>
-        <gson.version>2.11.0</gson.version>
+        <java.version>25</java.version>
+        <dss.version>6.4</dss.version>
+        <gson.version>2.14.0</gson.version>
         <apache.httpcomponents.version>4.5.14</apache.httpcomponents.version>
         <saxon.version>12.4</saxon.version>
         <xerces.version>2.12.1</xerces.version>
-        <slf4j.version>2.0.13</slf4j.version>
-        <junit.version>5.10.2</junit.version>
+        <slf4j.version>2.0.18</slf4j.version>
+        <junit.version>6.1.1</junit.version>
         <mockito.version>5.10.0</mockito.version>
         <commons-cli.version>1.6.0</commons-cli.version>
         <xmlunit.version>2.9.1</xmlunit.version>
@@ -172,7 +172,7 @@
         <dependency>
             <groupId>digital.slovensko.autogram</groupId>
             <artifactId>core</artifactId>
-            <version>0.9.2</version>
+            <version>0.9.3</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
