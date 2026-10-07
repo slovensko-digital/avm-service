@@ -4,22 +4,28 @@ import digital.slovensko.autogram.core.server.errors.MalformedBodyException;
 import digital.slovensko.autogram.core.server.errors.RequestValidationException;
 import digital.slovensko.autogram.service.dto.StampPdfRequestBody;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.documentinterchange.taggedpdf.PDLayoutAttributeObject;
+import org.apache.pdfbox.pdmodel.documentinterchange.taggedpdf.StandardStructureTypes;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.text.Normalizer;
 import java.util.Base64;
 
 public class PdfStamper {
     private static final float PADDING = 8;
     private static final float FONT_SIZE = 10;
     private static final float LINE_HEIGHT = 12;
+    // Liberation Sans (SIL OFL) is bundled with PDFBox; embedding it keeps the stamp text renderable and extractable
+    private static final String FONT_RESOURCE = "/org/apache/pdfbox/resources/ttf/LiberationSans-Regular.ttf";
+    private static final String DEFAULT_ALT_TEXT = "Visual signature";
 
     public byte[] stamp(byte[] content, StampPdfRequestBody.StampParameters stamp) {
         try (var pdf = Loader.loadPDF(content)) {
@@ -28,9 +34,17 @@ public class PdfStamper {
             var page = pdf.getPage(stamp.page() - 1);
             validateRectangle(page.getMediaBox(), stamp);
 
+            var mcid = tagStamp(pdf, page, stamp);
+
             try (var stream = new PDPageContentStream(pdf, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
-                var textHeight = drawText(stream, stamp);
+                if (mcid != null)
+                    stream.beginMarkedContent(COSName.getPDFName(StandardStructureTypes.Figure), mcid);
+
+                var textHeight = drawText(pdf, stream, stamp);
                 drawImage(pdf, stream, stamp, textHeight);
+
+                if (mcid != null)
+                    stream.endMarkedContent();
             }
 
             var output = new ByteArrayOutputStream();
@@ -41,14 +55,40 @@ public class PdfStamper {
         }
     }
 
-    private static float drawText(PDPageContentStream stream, StampPdfRequestBody.StampParameters stamp) throws IOException {
+    private static Integer tagStamp(PDDocument pdf, PDPage page, StampPdfRequestBody.StampParameters stamp) throws IOException {
+        var taggedPdf = TaggedPdf.of(pdf);
+        if (taggedPdf.isEmpty())
+            return null;
+
+        var element = taggedPdf.get().addElement(StandardStructureTypes.Figure, page);
+        element.setAlternateDescription(altText(stamp));
+
+        var layout = new PDLayoutAttributeObject();
+        layout.setBBox(new PDRectangle(stamp.x(), stamp.y(), stamp.width(), stamp.height()));
+        element.addAttribute(layout);
+
+        return taggedPdf.get().addMarkedContent(element, page);
+    }
+
+    private static String altText(StampPdfRequestBody.StampParameters stamp) {
+        if (stamp.altText() != null && !stamp.altText().isBlank())
+            return stamp.altText().strip();
+
+        if (stamp.text() != null && !stamp.text().isBlank())
+            return stamp.text().strip().replaceAll("\\s*\\R\\s*", ", ");
+
+        return DEFAULT_ALT_TEXT;
+    }
+
+    private static float drawText(PDDocument pdf, PDPageContentStream stream, StampPdfRequestBody.StampParameters stamp) throws IOException {
         if (stamp.text() == null || stamp.text().isBlank())
             return 0;
 
-        var lines = sanitizeText(stamp.text()).split("\\R");
+        var font = loadFont(pdf);
+        var lines = sanitizeText(font, stamp.text()).split("\\R");
         stream.beginText();
         stream.setNonStrokingColor(0.16f, 0.16f, 0.16f);
-        stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), FONT_SIZE);
+        stream.setFont(font, FONT_SIZE);
         stream.newLineAtOffset(stamp.x() + PADDING, stamp.y() + stamp.height() - FONT_SIZE - PADDING);
 
         for (int index = 0; index < lines.length; index++) {
@@ -103,8 +143,35 @@ public class PdfStamper {
             throw new RequestValidationException("Stamp rectangle is outside the page", "Stamp must fit inside the selected page");
     }
 
-    private static String sanitizeText(String text) {
-        var normalized = Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return normalized.replaceAll("[^\\x20-\\x7E]", "?");
+    private static PDFont loadFont(PDDocument pdf) throws IOException {
+        try (var font = PdfStamper.class.getResourceAsStream(FONT_RESOURCE)) {
+            if (font == null)
+                throw new IOException("Stamp font is not available");
+
+            return PDType0Font.load(pdf, font);
+        }
+    }
+
+    private static String sanitizeText(PDFont font, String text) {
+        var result = new StringBuilder();
+        text.replace('\t', ' ').codePoints().forEach(codePoint -> {
+            var character = Character.toString(codePoint);
+            if (character.matches("\\R")) {
+                result.append(character);
+            } else if (!Character.isISOControl(codePoint)) {
+                result.append(canEncode(font, character) ? character : "?");
+            }
+        });
+
+        return result.toString();
+    }
+
+    private static boolean canEncode(PDFont font, String character) {
+        try {
+            font.encode(character);
+            return true;
+        } catch (IllegalArgumentException | IOException e) {
+            return false;
+        }
     }
 }

@@ -8,6 +8,7 @@ import org.apache.pdfbox.cos.COSInteger;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.documentinterchange.taggedpdf.StandardStructureTypes;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
@@ -20,12 +21,15 @@ import java.util.List;
 import java.util.Set;
 
 public class PdfSignatureFieldPreparer {
+    private static final String DEFAULT_LABEL = "Signature field";
+
     public byte[] prepare(byte[] content, List<PrepareSignatureFieldsRequestBody.SignatureFieldParameters> fields) {
         try (var pdf = Loader.loadPDF(content)) {
             validateSignedPdf(pdf);
 
             var acroForm = getOrCreateAcroForm(pdf);
             var existingFieldNames = collectExistingFieldNames(acroForm);
+            var taggedPdf = TaggedPdf.of(pdf);
 
             for (var field : fields) {
                 validatePage(pdf, field.page());
@@ -36,11 +40,17 @@ public class PdfSignatureFieldPreparer {
 
                 var signatureField = new PDSignatureField(acroForm);
                 signatureField.setPartialName(field.fieldName());
+                signatureField.setAlternateFieldName(label(field));
 
                 var widget = signatureField.getWidgets().getFirst();
                 configureWidget(page, widget, field);
 
                 page.getAnnotations().add(widget);
+                if (taggedPdf.isPresent()) {
+                    var element = taggedPdf.get().addElement(StandardStructureTypes.FORM, page);
+                    taggedPdf.get().addAnnotation(element, widget, page);
+                }
+
                 acroForm.getFields().add(signatureField);
                 existingFieldNames.add(field.fieldName());
             }
@@ -64,6 +74,13 @@ public class PdfSignatureFieldPreparer {
         acroForm.setAppendOnly(true);
         catalog.setAcroForm(acroForm);
         return acroForm;
+    }
+
+    private static String label(PrepareSignatureFieldsRequestBody.SignatureFieldParameters field) {
+        if (field.label() == null || field.label().isBlank())
+            return DEFAULT_LABEL;
+
+        return field.label().strip();
     }
 
     private static Set<String> collectExistingFieldNames(PDAcroForm acroForm) {

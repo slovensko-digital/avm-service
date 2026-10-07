@@ -4,7 +4,7 @@ import digital.slovensko.autogram.core.server.dto.Document;
 import digital.slovensko.autogram.core.server.errors.RequestValidationException;
 
 public record StampPdfRequestBody(Document document, StampParameters stamp) {
-    public record StampParameters(int page, float x, float y, float width, float height, String text, String imageContent, String imageMimeType) {
+    public record StampParameters(int page, float x, float y, float width, float height, String text, String imageContent, String imageMimeType, String altText) {
     }
 
     public void validate() {
@@ -25,6 +25,9 @@ public record StampPdfRequestBody(Document document, StampParameters stamp) {
 
         if (stamp.text() != null && stamp.text().length() > 500)
             throw new RequestValidationException("Stamp.Text is too long", "Maximum stamp text length is 500 characters");
+
+        if (stamp.altText() != null && stamp.altText().length() > 500)
+            throw new RequestValidationException("Stamp.AltText is too long", "Maximum stamp alternative text length is 500 characters");
 
         if (stamp.imageContent() != null && !stamp.imageContent().isBlank() &&
                 (stamp.imageMimeType() == null || !(stamp.imageMimeType().equals("image/png") || stamp.imageMimeType().equals("image/jpeg"))))
