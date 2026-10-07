@@ -28,8 +28,8 @@ class PrepareSignatureFieldsRequestBodyTest {
         var request = new PrepareSignatureFieldsRequestBody(
                 new Document("contract.pdf", Base64.getEncoder().encodeToString("pdf".getBytes()), "application/pdf;base64"),
                 List.of(
-                        new PrepareSignatureFieldsRequestBody.SignatureFieldParameters("signature-field-alice", 1, 40, 40, 180, 64),
-                        new PrepareSignatureFieldsRequestBody.SignatureFieldParameters("signature-field-alice", 1, 40, 140, 180, 64)
+                        new PrepareSignatureFieldsRequestBody.SignatureFieldParameters("signature-field-alice", 1, 40, 40, 180, 64, null),
+                        new PrepareSignatureFieldsRequestBody.SignatureFieldParameters("signature-field-alice", 1, 40, 140, 180, 64, null)
                 )
         );
 

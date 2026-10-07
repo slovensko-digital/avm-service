@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public record PrepareSignatureFieldsRequestBody(Document document, List<SignatureFieldParameters> fields) {
-    public record SignatureFieldParameters(String fieldName, int page, float x, float y, float width, float height) {
+    public record SignatureFieldParameters(String fieldName, int page, float x, float y, float width, float height, String label) {
     }
 
     public void validate() {
@@ -34,6 +34,9 @@ public record PrepareSignatureFieldsRequestBody(Document document, List<Signatur
 
             if (!uniqueNames.add(field.fieldName()))
                 throw new RequestValidationException("Field.FieldName must be unique", "Each signature field in the request must have a unique fieldName");
+
+            if (field.label() != null && field.label().length() > 500)
+                throw new RequestValidationException("Field.Label is too long", "Maximum signature field label length is 500 characters");
 
             if (field.page() < 1)
                 throw new RequestValidationException("Field.Page must be positive", "Page numbers are one-based");

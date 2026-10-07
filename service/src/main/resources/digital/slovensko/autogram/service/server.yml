@@ -459,6 +459,11 @@ components:
           type: string
           example: signature-field-1f54d9b8
           description: Unique PDF form field identifier.
+        label:
+          type: string
+          maxLength: 500
+          example: Podpis – Ján Novák (jan.novak@example.com)
+          description: Human-readable field description stored as the field's accessible name (/TU). Defaults to "Signature field".
         page:
           type: integer
           minimum: 1
@@ -531,6 +536,11 @@ components:
             - image/png
             - image/jpeg
           description: Required when imageContent is provided.
+        altText:
+          type: string
+          maxLength: 500
+          example: "Vizuálny podpis: Ján Novák, 2. 10. 2026"
+          description: Alternative text of the stamp for assistive technologies in tagged PDFs. Defaults to text, or "Visual signature" when text is not provided.
       required:
         - page
         - x
