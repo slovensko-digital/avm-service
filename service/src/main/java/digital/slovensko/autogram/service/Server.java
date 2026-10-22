@@ -6,6 +6,7 @@ import digital.slovensko.autogram.core.server.filters.AutogramCorsFilter;
 import digital.slovensko.autogram.service.endpoints.DataToSignEndpoint;
 import digital.slovensko.autogram.service.endpoints.BuildSignatureEndpoint;
 import digital.slovensko.autogram.service.endpoints.DeprecatedSignEndpoint;
+import digital.slovensko.autogram.service.endpoints.VerifiableVisualizationEndpoint;
 import digital.slovensko.autogram.service.endpoints.VisualizationEndpoint;
 import digital.slovensko.autogram.service.endpoints.ParseEndpoint;
 import digital.slovensko.autogram.service.endpoints.PrepareSignatureFieldsEndpoint;
@@ -60,6 +61,10 @@ public class Server {
 
         // POST Visualization
         server.createContext("/visualization", new VisualizationEndpoint(autogramService)).getFilters()
+                .add(new AutogramCorsFilter("POST"));
+
+        // POST Verifiable visualization
+        server.createContext("/verifiable-visualization", new VerifiableVisualizationEndpoint(autogramService)).getFilters()
                 .add(new AutogramCorsFilter("POST"));
 
         // POST Stamp PDF
