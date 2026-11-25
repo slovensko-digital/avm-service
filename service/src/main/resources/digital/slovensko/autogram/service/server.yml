@@ -56,6 +56,49 @@ paths:
                     example: PayloadMimeType must be PDF when using PAdES.
                     description: Optional details.
 
+  /verifiable-visualization:
+    post:
+      tags:
+        - Visualization
+      description: |
+        Returns data objects covered by the signature instead of the rendered visualization, so client can visualize the document by itself and verify, that DataToSign corresponds to the visualized document.
+
+        - XAdES in ASiC container: the signed document, its digest is in the data object reference of the SignedInfo (DataToSign). XML Datacontainer referencing its presentation schema is returned along with the canonicalized XSLT, whose digest is in the XML Datacontainer.
+        - CAdES: the signed document. For ASiC-E container also the ASiC manifest with the document's digest. DataToSign (signed attributes) contains message-digest of the manifest or of the document itself.
+        - PAdES: the PDF prepared for signing with empty space for signature and its /ByteRange. DataToSign (signed attributes) contains message-digest of the byte range. The PDF is prepared with returned `signingTime`, which has to be sent in the following `/datatosign` request.
+
+        XAdES signatures without ASiC container are not supported.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OriginalSignRequestBody"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifiableVisualizationResponse"
+        422:
+          description: Verifiable visualization is not supported for the signature type or the input is not processable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: VERIFIABLE_VISUALIZATION_NOT_SUPPORTED
+                    description: Code that can be used to identify the error.
+                  message:
+                    type: string
+                    example: "Overiteľná vizualizácia nie je podporovaná pre typ podpisu: XAdES bez ASiC kontajnera"
+                    description: Human readable error message.
+                  details:
+                    type: string
+                    description: Optional details.
+
   /stamp-pdf:
     post:
       tags:
@@ -739,6 +782,11 @@ components:
       properties:
         originalSignRequestBody:
           $ref: "#/components/schemas/OriginalSignRequestBody"
+        signingTime:
+          type: integer
+          format: int64
+          example: 1707900119123
+          description: Optional signing time in milliseconds since epoch, current time is used if not provided. For PAdES it has to be `signingTime` returned from `/verifiable-visualization`, otherwise the PDF prepared for signing differs from the visualized one.
         signingCertificate:
           type: string
           example: MIIDZjCCAk6gAwIBAgIEZVH4UzANBgkqhkiG9w0BAQsFADB1MQswCQYDVQQGEwJTSzETMBEGA1UECAwKQnJhdGlzbGF2YTETMBEGA1UEBwwKQnJhdGlzbGF2YTERMA8GA1UECgwIQXV0b2dyYW0xETAPBgNVBAsMCEF1dG9ncmFtMRYwFAYDVQQDDA1BdXRvZ3JhbSBUZXN0MB4XDTIzMTExMzEwMjAwM1oXDTI0MTExMjEwMjAwM1owdTELMAkGA1UEBhMCU0sxEzARBgNVBAgMCkJyYXRpc2xhdmExEzARBgNVBAcMCkJyYXRpc2xhdmExETAPBgNVBAoMCEF1dG9ncmFtMREwDwYDVQQLDAhBdXRvZ3JhbTEWMBQGA1UEAwwNQXV0b2dyYW0gVGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAN8d3eH2xRJeesoNmDIguuHBv5hhqRPsN4LGjGmhQ9NrBAN1DKW31wh0+Tfdx58GNztgLVpElpQB7/yBprqNAKADYXs+onkUbg4X798lAbiaaMvQzY9dVXhFhb1I2ZEGurNhZqP01wbjRso4O0UJ2wSIw5r/sZZji17VhdhquVzDP+RzJeU36CRohE7T1caG6Q1/Tl5arSvEcJMz/8YUYjudB0Bbj+1Z06JTWK+FW/7zJmPNsRGSnF/TLIMDvIabMDoUswP7wBPbnoWy+B/tTdKnl818OKilRlZf5mjmINvZ8I3eXl0WRA/UlURuAp3PprcZnBdejCBHNomgyML8G9sCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAKD+0fM+cRVkDOoTU9qyESQ6tma8cchjV8dVvTbvHmLTZYCBxKUTugZOz9tENd+9p+1uGc6opcCrmiHyq0oG8D8Y9FLzHFKgslod4+IHUOON/pes+r6b4/0Z4+rjuZ5JrDyeIWsGtwVQaM6BeC1afr/H7uT9kr8Eu1ElNw/SAWBmQZiz3e40XF2ijPd9b43p05O0dqBF0q383bD2K15QJofzCM+0I0OqhJwsWvHlupoPlcF4gRqFV7MUQ5QHXOryUCICp8h2O8988JFvXxaJKGMCU9Zfick3KJ3UsdJ+0jbCL4pOep75abBD6pcdD9qlUF4seiiQiceMbmmeTQfqTgg==
@@ -774,6 +822,52 @@ components:
           $ref: "#/components/schemas/DocumentResponse"
         signer:
           $ref: "#/components/schemas/SignerRecord"
+
+    VerifiableVisualizationResponse:
+      type: object
+      properties:
+        signatureForm:
+          type: string
+          enum:
+            - XAdES
+            - CAdES
+            - PAdES
+        document:
+          description: Signed data object - the document referenced from the signature. For PAdES it is the PDF prepared for signing.
+          allOf:
+            - $ref: "#/components/schemas/Document"
+        transformation:
+          type: object
+          description: Only for XML Datacontainer referencing its presentation schema (XSLT).
+          properties:
+            content:
+              type: string
+              description: Base64 encoded XSLT canonicalized by the TransformAlgorithm of the reference in XML Datacontainer, so its digest can be compared to the DigestValue there.
+            mediaDestinationTypeDescription:
+              type: string
+              enum:
+                - TXT
+                - HTML
+                - XHTML
+        asicManifest:
+          description: Only for CAdES in ASiC-E container. ASiC manifest, which is signed by the CAdES signature and references the document.
+          allOf:
+            - $ref: "#/components/schemas/Document"
+        pdfByteRange:
+          type: array
+          description: Only for PAdES. /ByteRange of the signature in the PDF prepared for signing.
+          items:
+            type: integer
+            format: int64
+          example: [0, 11834, 49724, 894]
+        signingTime:
+          type: integer
+          format: int64
+          description: Only for PAdES. Signing time used to prepare the PDF, it has to be sent in the following `/datatosign` request.
+          example: 1707900119123
+      required:
+        - signatureForm
+        - document
 
     DocumentResponse:
       type: object

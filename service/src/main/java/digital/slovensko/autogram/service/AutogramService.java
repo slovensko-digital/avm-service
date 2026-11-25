@@ -7,9 +7,11 @@ import digital.slovensko.autogram.core.util.DSSUtils;
 import digital.slovensko.autogram.core.validation.SignatureValidator;
 import digital.slovensko.autogram.core.visualization.DocumentVisualizationBuilder;
 import digital.slovensko.autogram.core.errors.TransformationException;
+import digital.slovensko.autogram.service.dto.VerifiableVisualizationResponse;
 import eu.europa.esig.dss.model.DSSDocument;
 import eu.europa.esig.dss.pdfa.PDFAStructureValidator;
 
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -33,13 +35,23 @@ public class AutogramService implements SignatureExtender, SignatureComposer, Vi
     @Override
     public void buildSignedDocument(DSSDocument document, SigningParameters parameters, DataToSignStructure dataToSignStructure, String signedData, Responder responder) {
         var job = SigningJob.buildFromRequest(document, parameters, responder);
-        job.signWithSignedDataAndRespond(dataToSignStructure, signedData, settings.getTspSource());
+        responder.onSuccess(new VerifiableSigningJob(job).buildSignedDocument(dataToSignStructure, signedData, settings.getTspSource()));
     }
 
     @Override
     public DataToSignStructure getDataToSign(DSSDocument document, SigningParameters parameters, String signingCertificate) {
+        return getDataToSign(document, parameters, signingCertificate, null);
+    }
+
+    public DataToSignStructure getDataToSign(DSSDocument document, SigningParameters parameters, String signingCertificate, Long signingTime) {
         var job = SigningJob.buildFromRequest(document, parameters, null);
-        return job.buildDataToSign(DSSUtils.parseCertificate(signingCertificate));
+        return new VerifiableSigningJob(job).buildDataToSign(DSSUtils.parseCertificate(signingCertificate),
+                signingTime != null ? new Date(signingTime) : new Date());
+    }
+
+    public VerifiableVisualizationResponse buildVerifiableVisualization(DSSDocument document, SigningParameters parameters) {
+        var job = SigningJob.buildFromRequest(document, parameters, null);
+        return VerifiableVisualizationBuilder.build(job);
     }
 
     @Override
